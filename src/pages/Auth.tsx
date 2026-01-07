@@ -141,8 +141,7 @@ export default function Auth() {
                 </Button>
                 <Button
                   type="button"
-                  variant="ghost"
-                  className="w-full"
+                  className="w-full text-muted-foreground hover:text-foreground"
                   onClick={() => setResetMode(false)}
                 >
                   Back to Sign In
@@ -210,8 +209,7 @@ export default function Auth() {
                   </div>
                   <Button
                     type="button"
-                    variant="link"
-                    className="px-0 text-sm"
+                    className="px-0 text-sm text-primary hover:underline"
                     onClick={() => setResetMode(true)}
                   >
                     Forgot password?
