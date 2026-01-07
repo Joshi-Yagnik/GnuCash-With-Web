@@ -6,7 +6,7 @@ import {
   ArrowRightLeft,
   Trash2 
 } from "lucide-react";
-import { Transaction } from "@/lib/mockData";
+import { Transaction } from "@/lib/firebaseTypes";
 import { useFinance } from "@/contexts/FinanceContext";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";

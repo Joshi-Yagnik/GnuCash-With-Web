@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useFinance } from "@/contexts/FinanceContext";
-import { TransactionType } from "@/lib/mockData";
+import { TransactionType } from "@/lib/firebaseTypes";
 import { cn } from "@/lib/utils";
 
 const transactionTypes: { value: TransactionType; label: string; color: string }[] = [
@@ -52,7 +52,7 @@ export function AddTransactionDialog() {
       category: category || type.charAt(0).toUpperCase() + type.slice(1),
       accountId,
       toAccountId: type === "transfer" ? toAccountId : undefined,
-      date: new Date().toISOString().split("T")[0],
+      date: new Date(),
       notes: notes || undefined,
     });
 

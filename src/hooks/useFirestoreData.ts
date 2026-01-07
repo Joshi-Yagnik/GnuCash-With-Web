@@ -37,8 +37,7 @@ export function useFirestoreData() {
 
     const accountsQuery = query(
       collection(db, "accounts"),
-      where("userId", "==", user.uid),
-      orderBy("createdAt", "desc")
+      where("userId", "==", user.uid)
     );
 
     const unsubscribeAccounts = onSnapshot(accountsQuery, (snapshot) => {
@@ -48,13 +47,14 @@ export function useFirestoreData() {
         createdAt: doc.data().createdAt?.toDate() || new Date(),
         updatedAt: doc.data().updatedAt?.toDate() || new Date(),
       })) as Account[];
+      // Sort client-side to avoid needing composite index
+      accountsData.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
       setAccounts(accountsData);
     });
 
     const transactionsQuery = query(
       collection(db, "transactions"),
-      where("userId", "==", user.uid),
-      orderBy("date", "desc")
+      where("userId", "==", user.uid)
     );
 
     const unsubscribeTransactions = onSnapshot(transactionsQuery, (snapshot) => {
@@ -65,6 +65,8 @@ export function useFirestoreData() {
         createdAt: doc.data().createdAt?.toDate() || new Date(),
         updatedAt: doc.data().updatedAt?.toDate() || new Date(),
       })) as Transaction[];
+      // Sort client-side to avoid needing composite index
+      transactionsData.sort((a, b) => b.date.getTime() - a.date.getTime());
       setTransactions(transactionsData);
     });
 

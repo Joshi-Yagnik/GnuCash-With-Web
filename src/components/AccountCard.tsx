@@ -6,7 +6,7 @@ import {
   TrendingUp,
   MoreVertical
 } from "lucide-react";
-import { Account } from "@/lib/mockData";
+import { Account } from "@/lib/firebaseTypes";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
