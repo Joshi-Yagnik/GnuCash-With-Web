@@ -1,12 +1,12 @@
 import { createContext, useContext, ReactNode } from "react";
-import { useFinanceData } from "@/hooks/useFinanceData";
+import { useFirestoreData } from "@/hooks/useFirestoreData";
 
-type FinanceContextType = ReturnType<typeof useFinanceData>;
+type FinanceContextType = ReturnType<typeof useFirestoreData>;
 
 const FinanceContext = createContext<FinanceContextType | null>(null);
 
 export function FinanceProvider({ children }: { children: ReactNode }) {
-  const financeData = useFinanceData();
+  const financeData = useFirestoreData();
 
   return (
     <FinanceContext.Provider value={financeData}>
