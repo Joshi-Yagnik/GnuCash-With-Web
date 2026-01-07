@@ -1,4 +1,4 @@
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { 
   LayoutDashboard, 
   Wallet, 
@@ -11,6 +11,7 @@ import {
   ChevronLeft,
   TrendingUp
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { NavLink } from "@/components/NavLink";
 import {
   Sidebar,
@@ -42,8 +43,15 @@ const bottomMenuItems = [
 
 export function AppSidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { state } = useSidebar();
+  const { logout } = useAuth();
   const isCollapsed = state === "collapsed";
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/auth");
+  };
 
   return (
     <Sidebar 
@@ -120,6 +128,7 @@ export function AppSidebar() {
           ))}
           <SidebarMenuItem>
             <SidebarMenuButton
+              onClick={handleLogout}
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
                 "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent cursor-pointer"
