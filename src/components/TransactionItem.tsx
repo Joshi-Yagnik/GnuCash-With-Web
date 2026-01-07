@@ -1,15 +1,18 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 import { 
   TrendingUp, 
   TrendingDown, 
   ArrowRightLeft,
-  Trash2 
+  Trash2,
+  Pencil 
 } from "lucide-react";
 import { Transaction } from "@/lib/firebaseTypes";
 import { useFinance } from "@/contexts/FinanceContext";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { EditTransactionDialog } from "./EditTransactionDialog";
 
 interface TransactionItemProps {
   transaction: Transaction;
@@ -39,6 +42,7 @@ const typeConfig = {
 
 export function TransactionItem({ transaction, index = 0 }: TransactionItemProps) {
   const { getAccountById, deleteTransaction } = useFinance();
+  const [editOpen, setEditOpen] = useState(false);
   const config = typeConfig[transaction.type];
   const Icon = config.icon;
   const account = getAccountById(transaction.accountId);
@@ -89,6 +93,17 @@ export function TransactionItem({ transaction, index = 0 }: TransactionItemProps
         <Button
           variant="ghost"
           size="icon"
+          className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-primary"
+          onClick={(e) => {
+            e.stopPropagation();
+            setEditOpen(true);
+          }}
+        >
+          <Pencil className="w-4 h-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
           className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
           onClick={(e) => {
             e.stopPropagation();
@@ -98,6 +113,12 @@ export function TransactionItem({ transaction, index = 0 }: TransactionItemProps
           <Trash2 className="w-4 h-4" />
         </Button>
       </div>
+
+      <EditTransactionDialog 
+        transaction={transaction} 
+        open={editOpen} 
+        onOpenChange={setEditOpen} 
+      />
     </motion.div>
   );
 }
