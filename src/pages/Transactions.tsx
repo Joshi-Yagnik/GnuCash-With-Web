@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { TransactionType } from "@/lib/mockData";
+import { TransactionType } from "@/lib/firebaseTypes";
 
 export default function Transactions() {
   const { transactions, accounts } = useFinance();
