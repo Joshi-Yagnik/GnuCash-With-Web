@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { 
   Wallet, 
@@ -15,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { EditAccountDialog } from "./EditAccountDialog";
 
 interface AccountCardProps {
   account: Account;
@@ -38,6 +40,7 @@ const colorMap: Record<string, string> = {
 };
 
 export function AccountCard({ account, index = 0, onDelete }: AccountCardProps) {
+  const [editOpen, setEditOpen] = useState(false);
   const Icon = iconMap[account.icon as keyof typeof iconMap] || Wallet;
   const gradientClass = colorMap[account.color] || colorMap.primary;
   const isNegative = account.balance < 0;
@@ -73,7 +76,9 @@ export function AccountCard({ account, index = 0, onDelete }: AccountCardProps) 
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>Edit Account</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setEditOpen(true)}>
+                Edit Account
+              </DropdownMenuItem>
               <DropdownMenuItem>View Transactions</DropdownMenuItem>
               <DropdownMenuItem 
                 className="text-destructive"
@@ -91,6 +96,12 @@ export function AccountCard({ account, index = 0, onDelete }: AccountCardProps) 
         </p>
         <p className="text-xs text-white/60 mt-2 capitalize">{account.type} Account</p>
       </div>
+
+      <EditAccountDialog 
+        account={account} 
+        open={editOpen} 
+        onOpenChange={setEditOpen} 
+      />
     </motion.div>
   );
 }
