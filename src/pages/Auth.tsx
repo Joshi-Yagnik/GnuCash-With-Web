@@ -30,12 +30,19 @@ export default function Auth() {
     setLoading(true);
     try {
       await signIn(email, password);
-      toast({ title: "Welcome back!", description: "Successfully signed in" });
-      navigate("/");
+      // Navigation will be handled by AuthRoute based on emailVerified status
     } catch (error: any) {
+      let message = "Invalid email or password";
+      if (error.code === "auth/user-not-found") {
+        message = "No account found with this email";
+      } else if (error.code === "auth/wrong-password") {
+        message = "Incorrect password";
+      } else if (error.code === "auth/invalid-credential") {
+        message = "Invalid email or password";
+      }
       toast({
         title: "Sign in failed",
-        description: error.message || "Invalid email or password",
+        description: message,
         variant: "destructive",
       });
     } finally {
@@ -63,8 +70,11 @@ export default function Auth() {
     setLoading(true);
     try {
       await signUp(email, password);
-      toast({ title: "Account created!", description: "Welcome to Finance Dashboard" });
-      navigate("/");
+      toast({ 
+        title: "Verification email sent!", 
+        description: "Please check your inbox to verify your email address" 
+      });
+      navigate("/verify-email");
     } catch (error: any) {
       let message = "Failed to create account";
       if (error.code === "auth/email-already-in-use") {
