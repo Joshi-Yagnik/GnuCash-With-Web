@@ -5,6 +5,7 @@ import {
   signInWithEmailAndPassword,
   signOut,
   sendPasswordResetEmail,
+  sendEmailVerification,
   onAuthStateChanged,
 } from "firebase/auth";
 import { auth } from "@/lib/firebase";
@@ -16,6 +17,8 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
+  sendVerificationEmail: () => Promise<void>;
+  reloadUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -34,7 +37,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signUp = async (email: string, password: string) => {
-    await createUserWithEmailAndPassword(auth, email, password);
+    const { user } = await createUserWithEmailAndPassword(auth, email, password);
+    await sendEmailVerification(user);
   };
 
   const signIn = async (email: string, password: string) => {
@@ -49,8 +53,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await sendPasswordResetEmail(auth, email);
   };
 
+  const sendVerificationEmail = async () => {
+    if (auth.currentUser) {
+      await sendEmailVerification(auth.currentUser);
+    }
+  };
+
+  const reloadUser = async () => {
+    if (auth.currentUser) {
+      await auth.currentUser.reload();
+      setUser({ ...auth.currentUser });
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, signUp, signIn, logout, resetPassword }}>
+    <AuthContext.Provider value={{ user, loading, signUp, signIn, logout, resetPassword, sendVerificationEmail, reloadUser }}>
       {children}
     </AuthContext.Provider>
   );
