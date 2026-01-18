@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  ArrowRightLeft,
+import {
+  ArrowUpRight,
+  ArrowDownLeft,
+  ArrowLeftRight,
   Trash2,
-  Pencil 
+  Pencil,
+  Split
 } from "lucide-react";
 import { Transaction } from "@/lib/firebaseTypes";
 import { useFinance } from "@/contexts/FinanceContext";
@@ -21,19 +22,19 @@ interface TransactionItemProps {
 
 const typeConfig = {
   income: {
-    icon: TrendingUp,
+    icon: ArrowUpRight,
     color: "text-income",
     bgColor: "bg-income/10",
     label: "Income",
   },
   expense: {
-    icon: TrendingDown,
+    icon: ArrowDownLeft,
     color: "text-expense",
     bgColor: "bg-expense/10",
     label: "Expense",
   },
   transfer: {
-    icon: ArrowRightLeft,
+    icon: ArrowLeftRight,
     color: "text-transfer",
     bgColor: "bg-transfer/10",
     label: "Transfer",
@@ -46,8 +47,8 @@ export function TransactionItem({ transaction, index = 0 }: TransactionItemProps
   const config = typeConfig[transaction.type];
   const Icon = config.icon;
   const account = getAccountById(transaction.accountId);
-  const toAccount = transaction.toAccountId 
-    ? getAccountById(transaction.toAccountId) 
+  const toAccount = transaction.toAccountId
+    ? getAccountById(transaction.toAccountId)
     : null;
 
   const formattedDate = format(new Date(transaction.date), "MMM dd, yyyy");
@@ -69,12 +70,20 @@ export function TransactionItem({ transaction, index = 0 }: TransactionItemProps
           <Icon className={cn("w-5 h-5", config.color)} />
         </div>
         <div>
-          <p className="font-medium text-foreground">{transaction.description}</p>
+          <div className="flex items-center gap-2">
+            <p className="font-medium text-foreground">{transaction.description}</p>
+            {transaction.isSplit && (
+              <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
+                <Split className="w-3 h-3" />
+                <span>Split</span>
+              </div>
+            )}
+          </div>
           <div className="flex items-center gap-2 mt-0.5">
             <span className="text-sm text-muted-foreground">{account?.name}</span>
             {toAccount && (
               <>
-                <ArrowRightLeft className="w-3 h-3 text-muted-foreground" />
+                <ArrowLeftRight className="w-3 h-3 text-muted-foreground" />
                 <span className="text-sm text-muted-foreground">{toAccount.name}</span>
               </>
             )}
@@ -114,10 +123,10 @@ export function TransactionItem({ transaction, index = 0 }: TransactionItemProps
         </Button>
       </div>
 
-      <EditTransactionDialog 
-        transaction={transaction} 
-        open={editOpen} 
-        onOpenChange={setEditOpen} 
+      <EditTransactionDialog
+        transaction={transaction}
+        open={editOpen}
+        onOpenChange={setEditOpen}
       />
     </motion.div>
   );

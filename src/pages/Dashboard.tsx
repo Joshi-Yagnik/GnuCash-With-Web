@@ -7,18 +7,19 @@ import { TransactionItem } from "@/components/TransactionItem";
 import { SpendingChart } from "@/components/SpendingChart";
 import { CategoryChart } from "@/components/CategoryChart";
 import { AddTransactionDialog } from "@/components/AddTransactionDialog";
+import { SplitTransactionDialog } from "@/components/SplitTransactionDialog";
 import { useFinance } from "@/contexts/FinanceContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function Dashboard() {
-  const { 
-    accounts, 
-    transactions, 
-    getTotalBalance, 
-    getTotalIncome, 
+  const {
+    accounts,
+    transactions,
+    getTotalBalance,
+    getTotalIncome,
     getTotalExpenses,
-    deleteAccount 
+    deleteAccount
   } = useFinance();
 
   const totalBalance = getTotalBalance();
@@ -34,14 +35,14 @@ export default function Dashboard() {
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <motion.h1 
+            <motion.h1
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               className="text-3xl font-display font-bold text-foreground"
             >
               Dashboard
             </motion.h1>
-            <motion.p 
+            <motion.p
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
@@ -50,7 +51,10 @@ export default function Dashboard() {
               Welcome back! Here's your financial overview.
             </motion.p>
           </div>
-          <AddTransactionDialog />
+          <div className="flex gap-2">
+            <AddTransactionDialog />
+            <SplitTransactionDialog />
+          </div>
         </div>
 
         {/* Stats Grid */}
@@ -72,9 +76,9 @@ export default function Dashboard() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             {accounts.map((account, index) => (
-              <AccountCard 
-                key={account.id} 
-                account={account} 
+              <AccountCard
+                key={account.id}
+                account={account}
                 index={index}
                 onDelete={deleteAccount}
               />
@@ -121,9 +125,9 @@ export default function Dashboard() {
                 </div>
               ) : (
                 recentTransactions.map((transaction, index) => (
-                  <TransactionItem 
-                    key={transaction.id} 
-                    transaction={transaction} 
+                  <TransactionItem
+                    key={transaction.id}
+                    transaction={transaction}
                     index={index}
                   />
                 ))

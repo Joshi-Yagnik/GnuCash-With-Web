@@ -9,6 +9,7 @@ import Dashboard from "./pages/Dashboard";
 import Accounts from "./pages/Accounts";
 import Transactions from "./pages/Transactions";
 import Reports from "./pages/Reports";
+import Profile from "./pages/Profile";
 import Auth from "./pages/Auth";
 import VerifyEmail from "./pages/VerifyEmail";
 import NotFound from "./pages/NotFound";
@@ -17,7 +18,7 @@ const queryClient = new QueryClient();
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
-  
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -25,22 +26,22 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
-  
+
   if (!user) {
     return <Navigate to="/auth" replace />;
   }
-  
+
   // Redirect unverified users to verification page
   if (!user.emailVerified) {
     return <Navigate to="/verify-email" replace />;
   }
-  
+
   return <>{children}</>;
 }
 
 function AuthRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
-  
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -48,7 +49,7 @@ function AuthRoute({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
-  
+
   if (user) {
     // Redirect to verify email if not verified
     if (!user.emailVerified) {
@@ -56,13 +57,13 @@ function AuthRoute({ children }: { children: React.ReactNode }) {
     }
     return <Navigate to="/" replace />;
   }
-  
+
   return <>{children}</>;
 }
 
 function VerifyEmailRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
-  
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -70,17 +71,17 @@ function VerifyEmailRoute({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
-  
+
   // If not logged in, redirect to auth
   if (!user) {
     return <Navigate to="/auth" replace />;
   }
-  
+
   // If already verified, redirect to dashboard
   if (user.emailVerified) {
     return <Navigate to="/" replace />;
   }
-  
+
   return <>{children}</>;
 }
 
@@ -99,6 +100,7 @@ const App = () => (
               <Route path="/accounts" element={<ProtectedRoute><Accounts /></ProtectedRoute>} />
               <Route path="/transactions" element={<ProtectedRoute><Transactions /></ProtectedRoute>} />
               <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

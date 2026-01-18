@@ -14,13 +14,14 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
-import { Account, Transaction, Category, AccountType, TransactionType } from "@/lib/firebaseTypes";
+import { Account, Transaction, Category, AccountType, TransactionType, Split, SplitType } from "@/lib/firebaseTypes";
 
 export function useFirestoreData() {
   const { user } = useAuth();
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [splits, setSplits] = useState<Split[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Subscribe to accounts
@@ -29,6 +30,7 @@ export function useFirestoreData() {
       setAccounts([]);
       setTransactions([]);
       setCategories([]);
+      setSplits([]);
       setLoading(false);
       return;
     }
@@ -81,6 +83,20 @@ export function useFirestoreData() {
         ...doc.data(),
       })) as Category[];
       setCategories(categoriesData);
+    });
+
+    // Subscribe to splits
+    const splitsQuery = query(
+      collection(db, "splits"),
+      where("userId", "==", user.uid)
+    );
+
+    const unsubscribeSplits = onSnapshot(splitsQuery, (snapshot) => {
+      const splitsData = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Split[];
+      setSplits(splitsData);
       setLoading(false);
     });
 
@@ -88,6 +104,7 @@ export function useFirestoreData() {
       unsubscribeAccounts();
       unsubscribeTransactions();
       unsubscribeCategories();
+      unsubscribeSplits();
     };
   }, [user]);
 
@@ -122,7 +139,7 @@ export function useFirestoreData() {
   const addAccount = useCallback(
     async (account: Omit<Account, "id" | "userId" | "createdAt" | "updatedAt">) => {
       if (!user) return;
-      
+
       await addDoc(collection(db, "accounts"), {
         ...account,
         userId: user.uid,
@@ -145,10 +162,10 @@ export function useFirestoreData() {
 
   const deleteAccount = useCallback(async (id: string) => {
     const batch = writeBatch(db);
-    
+
     // Delete the account
     batch.delete(doc(db, "accounts", id));
-    
+
     // Delete related transactions
     const relatedTransactions = transactions.filter(
       (t) => t.accountId === id || t.toAccountId === id
@@ -156,7 +173,7 @@ export function useFirestoreData() {
     relatedTransactions.forEach((t) => {
       batch.delete(doc(db, "transactions", t.id));
     });
-    
+
     await batch.commit();
   }, [transactions]);
 
@@ -165,12 +182,13 @@ export function useFirestoreData() {
       if (!user) return;
 
       const batch = writeBatch(db);
-      
+
       // Add transaction
       const transactionRef = doc(collection(db, "transactions"));
       batch.set(transactionRef, {
         ...transaction,
         userId: user.uid,
+        isSplit: false, // Simple transaction
         date: Timestamp.fromDate(transaction.date instanceof Date ? transaction.date : new Date(transaction.date)),
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
@@ -183,8 +201,8 @@ export function useFirestoreData() {
           transaction.type === "income"
             ? transaction.amount
             : transaction.type === "expense"
-            ? -transaction.amount
-            : -transaction.amount;
+              ? -transaction.amount
+              : -transaction.amount;
 
         batch.update(doc(db, "accounts", account.id), {
           balance: account.balance + balanceChange,
@@ -235,8 +253,8 @@ export function useFirestoreData() {
           transaction.type === "income"
             ? -transaction.amount
             : transaction.type === "expense"
-            ? transaction.amount
-            : transaction.amount;
+              ? transaction.amount
+              : transaction.amount;
 
         batch.update(doc(db, "accounts", account.id), {
           balance: account.balance + balanceChange,
@@ -263,7 +281,7 @@ export function useFirestoreData() {
   const addCategory = useCallback(
     async (category: Omit<Category, "id" | "userId">) => {
       if (!user) return;
-      
+
       await addDoc(collection(db, "categories"), {
         ...category,
         userId: user.uid,
@@ -280,7 +298,7 @@ export function useFirestoreData() {
   const getMonthlyData = useCallback(() => {
     const monthlyData: { month: string; income: number; expenses: number }[] = [];
     const last6Months: Date[] = [];
-    
+
     for (let i = 5; i >= 0; i--) {
       const date = new Date();
       date.setMonth(date.getMonth() - i);
@@ -337,10 +355,134 @@ export function useFirestoreData() {
     }));
   }, [transactions]);
 
+  // Get splits for a transaction
+  const getSplitsByTransactionId = useCallback(
+    (transactionId: string) => {
+      return splits.filter((s) => s.transactionId === transactionId);
+    },
+    [splits]
+  );
+
+  // Helper function to calculate account balance change based on double-entry rules
+  const calculateBalanceChange = (accountType: AccountType, splitType: SplitType, amount: number): number => {
+    // Asset and Expense accounts: Debit increases, Credit decreases
+    // Liability and Income accounts: Credit increases, Debit decreases
+    if (accountType === "asset" || accountType === "expense") {
+      return splitType === "debit" ? amount : -amount;
+    } else {
+      return splitType === "credit" ? amount : -amount;
+    }
+  };
+
+  // Add split transaction with double-entry bookkeeping
+  const addSplitTransaction = useCallback(
+    async (
+      transaction: Omit<Transaction, "id" | "userId" | "createdAt" | "updatedAt" | "isSplit">,
+      splitEntries: Omit<Split, "id" | "transactionId">[]
+    ) => {
+      if (!user) return;
+
+      // Validate splits balance
+      const totalDebits = splitEntries
+        .filter((s) => s.type === "debit")
+        .reduce((sum, s) => sum + s.amount, 0);
+      const totalCredits = splitEntries
+        .filter((s) => s.type === "credit")
+        .reduce((sum, s) => sum + s.amount, 0);
+
+      if (Math.abs(totalDebits - totalCredits) > 0.01) {
+        throw new Error(
+          `Splits must balance: debits ($${totalDebits.toFixed(2)}) must equal credits ($${totalCredits.toFixed(2)})`
+        );
+      }
+
+      const batch = writeBatch(db);
+
+      // Add transaction
+      const transactionRef = doc(collection(db, "transactions"));
+      batch.set(transactionRef, {
+        ...transaction,
+        userId: user.uid,
+        isSplit: true,
+        date: Timestamp.fromDate(transaction.date instanceof Date ? transaction.date : new Date(transaction.date)),
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      });
+
+      // Add splits and update account balances
+      for (const splitEntry of splitEntries) {
+        const splitRef = doc(collection(db, "splits"));
+        batch.set(splitRef, {
+          ...splitEntry,
+          transactionId: transactionRef.id,
+          userId: user.uid,
+        });
+
+        // Update account balance based on double-entry rules
+        const account = accounts.find((a) => a.id === splitEntry.accountId);
+        if (account) {
+          const balanceChange = calculateBalanceChange(account.type, splitEntry.type, splitEntry.amount);
+          batch.update(doc(db, "accounts", account.id), {
+            balance: account.balance + balanceChange,
+            updatedAt: Timestamp.now(),
+          });
+        }
+      }
+
+      await batch.commit();
+    },
+    [user, accounts]
+  );
+
+  // Delete split transaction and reverse balance changes
+  const deleteSplitTransaction = useCallback(
+    async (transactionId: string) => {
+      const transactionSplits = splits.filter((s) => s.transactionId === transactionId);
+      if (transactionSplits.length === 0) return;
+
+      const batch = writeBatch(db);
+
+      // Delete transaction
+      batch.delete(doc(db, "transactions", transactionId));
+
+      // Delete splits and reverse account balances
+      for (const split of transactionSplits) {
+        batch.delete(doc(db, "splits", split.id));
+
+        const account = accounts.find((a) => a.id === split.accountId);
+        if (account) {
+          // Reverse the balance change
+          const balanceChange = calculateBalanceChange(account.type, split.type, split.amount);
+          batch.update(doc(db, "accounts", account.id), {
+            balance: account.balance - balanceChange,
+            updatedAt: Timestamp.now(),
+          });
+        }
+      }
+
+      await batch.commit();
+    },
+    [splits, accounts]
+  );
+
+  // Helper functions for transaction forms
+  const getAssetAccounts = useCallback(() => {
+    return accounts.filter((a) => a.type === "asset");
+  }, [accounts]);
+
+  const getIncomeCategories = useCallback(() => {
+    return categories.filter((c) => c.type === "income");
+  }, [categories]);
+
+  const getExpenseCategories = useCallback(() => {
+    return categories.filter((c) => c.type === "expense");
+  }, [categories]);
+
   return {
     accounts,
     transactions,
     categories,
+    splits,
     loading,
     getTotalBalance,
     getTotalIncome,
@@ -356,5 +498,11 @@ export function useFirestoreData() {
     deleteCategory,
     getMonthlyData,
     getCategorySpending,
+    getSplitsByTransactionId,
+    addSplitTransaction,
+    deleteSplitTransaction,
+    getAssetAccounts,
+    getIncomeCategories,
+    getExpenseCategories,
   };
 }
