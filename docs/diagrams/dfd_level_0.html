@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DFD Level 0 - Finance Joshi</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 40px;
+            background: white;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            background: white;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .mermaid {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .instructions {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="instructions">
+            <strong>To save as image:</strong> Right-click on the diagram → Save image as → Choose location
+            <br>Or use browser screenshot tool: Press F12 → Ctrl+Shift+P → Type "screenshot" → "Capture full size
+            screenshot"
+        </div>
+        <h1>DFD Level 0 - Context Diagram</h1>
+        <div class="mermaid">
+            flowchart LR
+            User((User))
+            GoogleAuth((Google OAuth))
+            EmailService((Email Service))
+
+            System[Finance Joshi System]
+
+            User -->|Registration Details| System
+            User -->|Login Credentials| System
+            User -->|Transaction Data| System
+            User -->|Account Information| System
+            User -->|Profile Updates| System
+
+            System -->|Authentication Status| User
+            System -->|Financial Dashboard| User
+            System -->|Transaction History| User
+            System -->|Reports & Analytics| User
+            System -->|Profile Information| User
+
+            GoogleAuth -->|OAuth Tokens| System
+            System -->|Auth Request| GoogleAuth
+
+            System -->|Verification Email| EmailService
+            System -->|Password Reset Email| EmailService
+
+            style System fill:#2196F3,stroke:#1565C0,color:#fff,stroke-width:3px
+            style User fill:#4CAF50,stroke:#2E7D32,color:#fff
+            style GoogleAuth fill:#DB4437,stroke:#C62828,color:#fff
+            style EmailService fill:#FF9800,stroke:#E65100,color:#fff
+        </div>
+    </div>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true
+            }
+        });
+    </script>
+</body>
+
+</html>

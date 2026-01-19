@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DFD Level 1 - Finance Joshi</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 40px;
+            background: white;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            background: white;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .mermaid {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .instructions {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="instructions">
+            <strong>To save as image:</strong> Right-click on the diagram → Save image as → Choose location
+            <br>Or use browser screenshot tool: Press F12 → Ctrl+Shift+P → Type "screenshot" → "Capture full size
+            screenshot"
+        </div>
+        <h1>DFD Level 1 - System Overview</h1>
+        <div class="mermaid">
+            flowchart TB
+            User((User))
+
+            subgraph "Finance Joshi System"
+            P1[1.0<br />Authentication<br />Management]
+            P2[2.0<br />User Profile<br />Management]
+            P3[3.0<br />Account<br />Management]
+            P4[4.0<br />Transaction<br />Management]
+            P5[5.0<br />Category<br />Management]
+            P6[6.0<br />Reports &<br />Analytics]
+
+            DS1[(D1: Users)]
+            DS2[(D2: Accounts)]
+            DS3[(D3: Transactions)]
+            DS4[(D4: Categories)]
+            DS5[(D5: Splits)]
+            DS6[(D6: User Profiles)]
+            end
+
+            GoogleAuth((Google OAuth))
+            EmailService((Email Service))
+
+            %% Authentication flows
+            User -->|Login Credentials| P1
+            User -->|Registration Data| P1
+            GoogleAuth -->|OAuth Token| P1
+            P1 -->|Verification Email Request| EmailService
+            P1 -->|Auth Status| User
+            P1 -->|User ID| DS1
+            DS1 -->|User Data| P1
+
+            %% Profile Management flows
+            User -->|Profile Updates| P2
+            User -->|Photo Upload| P2
+            P2 -->|Profile Data| DS6
+            DS6 -->|Current Profile| P2
+            P2 -->|Updated Profile| User
+            DS1 -->|User Info| P2
+
+            %% Account Management flows
+            User -->|Account Operations| P3
+            P3 -->|Account Data| DS2
+            DS2 -->|Account List| P3
+            P3 -->|Account Info| User
+            DS1 -->|User ID| P3
+
+            %% Transaction Management flows
+            User -->|Transaction Operations| P4
+            P4 -->|Transaction Data| DS3
+            DS3 -->|Transaction History| P4
+            P4 -->|Balance Updates| DS2
+            DS2 -->|Account Balance| P4
+            P4 -->|Transaction Confirmation| User
+            P4 -->|Split Data| DS5
+            DS5 -->|Split Details| P4
+
+            %% Category Management flows
+            User -->|Category Preferences| P5
+            P5 -->|Category Data| DS4
+            DS4 -->|Category List| P5
+            P5 -->|Available Categories| User
+            P4 -->|Category Assignment| DS4
+
+            %% Reports & Analytics flows
+            User -->|Report Request| P6
+            DS3 -->|Transaction Data| P6
+            DS2 -->|Account Data| P6
+            DS4 -->|Category Data| P6
+            P6 -->|Reports & Charts| User
+
+            style P1 fill:#FF9800,stroke:#E65100,color:#fff
+            style P2 fill:#9C27B0,stroke:#6A1B9A,color:#fff
+            style P3 fill:#4CAF50,stroke:#2E7D32,color:#fff
+            style P4 fill:#2196F3,stroke:#1565C0,color:#fff
+            style P5 fill:#00BCD4,stroke:#00838F,color:#fff
+            style P6 fill:#FF5722,stroke:#D84315,color:#fff
+
+            style DS1 fill:#FFF9C4,stroke:#F57F17,color:#000
+            style DS2 fill:#FFF9C4,stroke:#F57F17,color:#000
+            style DS3 fill:#FFF9C4,stroke:#F57F17,color:#000
+            style DS4 fill:#FFF9C4,stroke:#F57F17,color:#000
+            style DS5 fill:#FFF9C4,stroke:#F57F17,color:#000
+            style DS6 fill:#FFF9C4,stroke:#F57F17,color:#000
+        </div>
+    </div>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class Diagram - Finance Joshi</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 40px;
+            background: white;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            background: white;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .mermaid {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .instructions {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="instructions">
+            <strong>To save as image:</strong> Right-click on the diagram → Save image as → Choose location
+            <br>Or use browser screenshot tool: Press F12 → Ctrl+Shift+P → Type "screenshot" → "Capture full size
+            screenshot"
+        </div>
+        <h1>UML Class Diagram - Finance Joshi</h1>
+        <div class="mermaid">
+            classDiagram
+            class User {
+            +uid string
+            +email string
+            +emailVerified boolean
+            +displayName string
+            +photoURL string
+            +createdAt Date
+            +signUp()
+            +signIn()
+            +logout()
+            }
+
+            class UserProfile {
+            +id string
+            +userId string
+            +name string
+            +email string
+            +photoURL string
+            +isInitialized boolean
+            +updateProfile()
+            +uploadPhoto()
+            }
+
+            class Account {
+            +id string
+            +userId string
+            +name string
+            +balance number
+            +currency string
+            +color string
+            +create()
+            +update()
+            +delete()
+            +updateBalance()
+            }
+
+            class Transaction {
+            +id string
+            +userId string
+            +description string
+            +amount number
+            +category string
+            +accountId string
+            +date Date
+            +isSplit boolean
+            +create()
+            +update()
+            +delete()
+            }
+
+            class Split {
+            +id string
+            +transactionId string
+            +accountId string
+            +accountName string
+            +amount number
+            +create()
+            +delete()
+            }
+
+            class Category {
+            +id string
+            +userId string
+            +name string
+            +icon string
+            +color string
+            +create()
+            +update()
+            }
+
+            class AuthContext {
+            +user User
+            +loading boolean
+            +signUp()
+            +signIn()
+            +logout()
+            }
+
+            class FinanceContext {
+            +loading boolean
+            +addAccount()
+            +addTransaction()
+            +addCategory()
+            +getStatistics()
+            }
+
+            class FirebaseService {
+            +initializeApp()
+            +getAuth()
+            +getFirestore()
+            +getStorage()
+            }
+
+            User --> UserProfile
+            User --> Account
+            User --> Transaction
+            User --> Category
+            Account --> Transaction
+            Transaction --> Split
+            Transaction --> Category
+            Transaction --> Account
+            Split --> Account
+            AuthContext --> User
+            FinanceContext --> FirebaseService
+        </div>
+    </div>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default'
+        });
+    </script>
+</body>
+
+</html>

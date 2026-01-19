@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DFD Level 2 - Transaction Management</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 40px;
+            background: white;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            background: white;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .mermaid {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .instructions {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="instructions">
+            <strong>To save as image:</strong> Right-click on the diagram → Save image as → Choose location
+            <br>Or use browser screenshot tool: Press F12 → Ctrl+Shift+P → Type "screenshot" → "Capture full size
+            screenshot"
+        </div>
+        <h1>DFD Level 2 - Transaction Management Process</h1>
+        <div class="mermaid">
+            flowchart TB
+            User((User))
+
+            subgraph "4.0 Transaction Management"
+            P41[4.1<br />Validate<br />Transaction]
+            P42[4.2<br />Create<br />Transaction]
+            P43[4.3<br />Update<br />Account Balance]
+            P44[4.4<br />Create<br />Split Entries]
+            P45[4.5<br />Edit<br />Transaction]
+            P46[4.6<br />Delete<br />Transaction]
+            P47[4.7<br />Query<br />Transactions]
+            end
+
+            DS2[(D2: Accounts)]
+            DS3[(D3: Transactions)]
+            DS4[(D4: Categories)]
+            DS5[(D5: Splits)]
+
+            %% Create Transaction Flow
+            User -->|Transaction Request| P41
+            P41 -->|Validation Request| DS2
+            P41 -->|Category Check| DS4
+            DS2 -->|Account Exists?| P41
+            DS4 -->|Category Valid?| P41
+
+            P41 -->|Valid Transaction| P42
+            P42 -->|Transaction Record| DS3
+
+            P42 -->|Balance Update Request| P43
+            P43 -->|Update Balance| DS2
+            DS2 -->|Current Balance| P43
+            P43 -->|Balance Updated| User
+
+            P42 -->|Split Required?| P44
+            P44 -->|Debit Entry| DS5
+            P44 -->|Credit Entry| DS5
+            P44 -->|Split Created| User
+
+            %% Edit Transaction Flow
+            User -->|Edit Request| P45
+            DS3 -->|Existing Transaction| P45
+            P45 -->|Reverse Old Balance| P43
+            P45 -->|Updated Transaction| DS3
+            P45 -->|Apply New Balance| P43
+            DS5 -->|Existing Splits| P45
+            P45 -->|Updated Splits| DS5
+
+            %% Delete Transaction Flow
+            User -->|Delete Request| P46
+            DS3 -->|Transaction to Delete| P46
+            P46 -->|Reverse Balance| P43
+            P46 -->|Remove Transaction| DS3
+            DS5 -->|Associated Splits| P46
+            P46 -->|Remove Splits| DS5
+
+            %% Query Transaction Flow
+            User -->|Query Request| P47
+            DS3 -->|Transaction List| P47
+            DS2 -->|Account Names| P47
+            DS4 -->|Category Names| P47
+            P47 -->|Filtered Results| User
+
+            style P41 fill:#E3F2FD,stroke:#1565C0,color:#000
+            style P42 fill:#C5E1A5,stroke:#558B2F,color:#000
+            style P43 fill:#FFECB3,stroke:#F57F17,color:#000
+            style P44 fill:#F8BBD0,stroke:#C2185B,color:#000
+            style P45 fill:#BBDEFB,stroke:#0288D1,color:#000
+            style P46 fill:#FFCDD2,stroke:#C62828,color:#000
+            style P47 fill:#D1C4E9,stroke:#5E35B1,color:#000
+        </div>
+    </div>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true
+            }
+        });
+    </script>
+</body>
+
+</html>

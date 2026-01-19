@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance Joshi - All Diagrams</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .card-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .card-description {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .card-link {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: opacity 0.3s ease;
+        }
+
+        .card-link:hover {
+            opacity: 0.9;
+        }
+
+        .info-section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .info-section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.8em;
+        }
+
+        .info-section p,
+        .info-section li {
+            color: #555;
+            line-height: 1.8;
+            margin-bottom: 10px;
+        }
+
+        .info-section ul {
+            margin-left: 20px;
+        }
+
+        .highlight {
+            background: #f0f4ff;
+            padding: 15px;
+            border-left: 4px solid #667eea;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+
+        footer {
+            text-align: center;
+            color: white;
+            padding: 20px;
+            opacity: 0.9;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Finance Joshi</h1>
+            <p class="subtitle">Project Diagrams & Documentation</p>
+        </header>
+
+        <div class="info-section">
+            <h2>🎯 Quick Access to All Diagrams</h2>
+            <p>Click on any card below to open the diagram. All diagrams are rendered using Mermaid.js and can be saved
+                as images.</p>
+
+            <div class="highlight">
+                <strong>💡 How to Save as Image:</strong>
+                <ul>
+                    <li><strong>Method 1:</strong> Right-click on diagram → "Save image as..."</li>
+                    <li><strong>Method 2:</strong> Press F12 → Ctrl+Shift+P → Type "screenshot" → "Capture full size
+                        screenshot"</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <div class="card-icon">🔄</div>
+                <div class="card-title">Workflow Chart</div>
+                <div class="card-description">
+                    Complete user journey from authentication through all features including accounts, transactions,
+                    reports, and profile management.
+                </div>
+                <a href="workflow_chart.html" class="card-link">View Diagram →</a>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">🌐</div>
+                <div class="card-title">DFD Level 0</div>
+                <div class="card-description">
+                    Context Diagram showing the Finance Joshi system with external entities (User, Google OAuth, Email
+                    Service).
+                </div>
+                <a href="dfd_level_0.html" class="card-link">View Diagram →</a>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">📦</div>
+                <div class="card-title">DFD Level 1</div>
+                <div class="card-description">
+                    System Overview with 6 major processes (Authentication, Profile, Accounts, Transactions, Categories,
+                    Reports) and 6 data stores.
+                </div>
+                <a href="dfd_level_1.html" class="card-link">View Diagram →</a>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">💳</div>
+                <div class="card-title">DFD Level 2 - Transaction</div>
+                <div class="card-description">
+                    Detailed breakdown of Transaction Management process with 7 sub-processes for CRUD operations and
+                    balance management.
+                </div>
+                <a href="dfd_level_2_transaction.html" class="card-link">View Diagram →</a>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">🏗️</div>
+                <div class="card-title">Class Diagram</div>
+                <div class="card-description">
+                    Complete UML Class Diagram showing all entities (User, Account, Transaction, Split, Category) with
+                    attributes, methods, and relationships.
+                </div>
+                <a href="class_diagram.html" class="card-link">View Diagram →</a>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">📚</div>
+                <div class="card-title">Documentation</div>
+                <div class="card-description">
+                    View the complete project documentation including project plan, features, technology stack, and
+                    development phases.
+                </div>
+                <a href="../README.md" class="card-link">View Docs →</a>
+            </div>
+        </div>
+
+        <div class="info-section">
+            <h2>📋 Diagram Overview</h2>
+
+            <h3 style="color: #764ba2; margin-top: 20px;">What's Included</h3>
+            <ul>
+                <li><strong>Workflow Chart:</strong> Complete application flow and user journey</li>
+                <li><strong>DFD Level 0:</strong> High-level system context</li>
+                <li><strong>DFD Level 1:</strong> Internal processes and data flow</li>
+                <li><strong>DFD Level 2:</strong> Detailed transaction processing</li>
+                <li><strong>Class Diagram:</strong> Object-oriented design and relationships</li>
+            </ul>
+
+            <h3 style="color: #764ba2; margin-top: 20px;">Perfect For</h3>
+            <ul>
+                <li>Project presentations and reports</li>
+                <li>Technical documentation</li>
+                <li>Development reference</li>
+                <li>Academic submissions</li>
+                <li>Client presentations</li>
+                <li>Team onboarding</li>
+            </ul>
+        </div>
+
+        <footer>
+            <p><strong>Finance Joshi</strong> - Personal Finance Management System</p>
+            <p>Created: January 19, 2026 | Version 1.0</p>
+        </footer>
+    </div>
+</body>
+
+</html>
