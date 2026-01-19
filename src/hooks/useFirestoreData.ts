@@ -59,31 +59,45 @@ export function useFirestoreData() {
       where("userId", "==", user.uid)
     );
 
-    const unsubscribeTransactions = onSnapshot(transactionsQuery, (snapshot) => {
-      const transactionsData = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-        date: doc.data().date?.toDate() || new Date(),
-        createdAt: doc.data().createdAt?.toDate() || new Date(),
-        updatedAt: doc.data().updatedAt?.toDate() || new Date(),
-      })) as Transaction[];
-      // Sort client-side to avoid needing composite index
-      transactionsData.sort((a, b) => b.date.getTime() - a.date.getTime());
-      setTransactions(transactionsData);
-    });
+    const unsubscribeTransactions = onSnapshot(
+      transactionsQuery,
+      (snapshot) => {
+        const transactionsData = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+          date: doc.data().date?.toDate() || new Date(),
+          createdAt: doc.data().createdAt?.toDate() || new Date(),
+          updatedAt: doc.data().updatedAt?.toDate() || new Date(),
+        })) as Transaction[];
+        // Sort client-side to avoid needing composite index
+        transactionsData.sort((a, b) => b.date.getTime() - a.date.getTime());
+        console.log("Transactions loaded:", transactionsData.length, transactionsData);
+        setTransactions(transactionsData);
+      },
+      (error) => {
+        console.error("Error loading transactions:", error);
+      }
+    );
 
     const categoriesQuery = query(
       collection(db, "categories"),
       where("userId", "==", user.uid)
     );
 
-    const unsubscribeCategories = onSnapshot(categoriesQuery, (snapshot) => {
-      const categoriesData = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Category[];
-      setCategories(categoriesData);
-    });
+    const unsubscribeCategories = onSnapshot(
+      categoriesQuery,
+      (snapshot) => {
+        const categoriesData = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Category[];
+        console.log("Categories loaded:", categoriesData.length);
+        setCategories(categoriesData);
+      },
+      (error) => {
+        console.error("Error loading categories:", error);
+      }
+    );
 
     // Subscribe to splits
     const splitsQuery = query(
@@ -91,14 +105,22 @@ export function useFirestoreData() {
       where("userId", "==", user.uid)
     );
 
-    const unsubscribeSplits = onSnapshot(splitsQuery, (snapshot) => {
-      const splitsData = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Split[];
-      setSplits(splitsData);
-      setLoading(false);
-    });
+    const unsubscribeSplits = onSnapshot(
+      splitsQuery,
+      (snapshot) => {
+        const splitsData = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Split[];
+        console.log("Splits loaded:", splitsData.length);
+        setSplits(splitsData);
+        setLoading(false);
+      },
+      (error) => {
+        console.error("Error loading splits:", error);
+        setLoading(false);
+      }
+    );
 
     return () => {
       unsubscribeAccounts();

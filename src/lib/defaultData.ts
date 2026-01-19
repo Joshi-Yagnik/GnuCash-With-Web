@@ -2,6 +2,7 @@ import { AccountType } from "./firebaseTypes";
 
 // Default accounts to create for new users
 export const DEFAULT_ACCOUNTS = [
+    // Asset Accounts
     {
         name: "Cash Wallet",
         type: "asset" as AccountType,
@@ -25,6 +26,57 @@ export const DEFAULT_ACCOUNTS = [
         currency: "USD",
         color: "#8b5cf6", // purple
         icon: "piggy-bank",
+    },
+    // Liability Accounts
+    {
+        name: "Credit Card",
+        type: "liability" as AccountType,
+        balance: 0,
+        currency: "USD",
+        color: "#ef4444", // red
+        icon: "credit-card",
+    },
+    {
+        name: "Personal Loan",
+        type: "liability" as AccountType,
+        balance: 0,
+        currency: "USD",
+        color: "#f97316", // orange
+        icon: "file-text",
+    },
+    // Income Accounts
+    {
+        name: "Salary Income",
+        type: "income" as AccountType,
+        balance: 0,
+        currency: "USD",
+        color: "#22c55e", // light green
+        icon: "trending-up",
+    },
+    {
+        name: "Business Income",
+        type: "income" as AccountType,
+        balance: 0,
+        currency: "USD",
+        color: "#06b6d4", // cyan
+        icon: "briefcase",
+    },
+    // Expense Accounts
+    {
+        name: "Living Expenses",
+        type: "expense" as AccountType,
+        balance: 0,
+        currency: "USD",
+        color: "#f59e0b", // amber
+        icon: "home",
+    },
+    {
+        name: "Entertainment Expenses",
+        type: "expense" as AccountType,
+        balance: 0,
+        currency: "USD",
+        color: "#ec4899", // pink
+        icon: "film",
     },
 ];
 

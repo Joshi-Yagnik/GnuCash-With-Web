@@ -56,18 +56,27 @@ export function EditTransactionDialog({ transaction, open, onOpenChange }: EditT
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!description || !amount || !accountId) return;
 
-    await updateTransaction(transaction.id, {
+    const updates: any = {
       description,
       amount: parseFloat(amount),
       type,
       category: category || type.charAt(0).toUpperCase() + type.slice(1),
       accountId,
-      toAccountId: type === "transfer" ? toAccountId : undefined,
-      notes: notes || undefined,
-    });
+    };
+
+    // Only include optional fields if they have values
+    if (type === "transfer" && toAccountId) {
+      updates.toAccountId = toAccountId;
+    }
+
+    if (notes) {
+      updates.notes = notes;
+    }
+
+    await updateTransaction(transaction.id, updates);
 
     onOpenChange(false);
   };
@@ -78,7 +87,7 @@ export function EditTransactionDialog({ transaction, open, onOpenChange }: EditT
         <DialogHeader>
           <DialogTitle className="font-display text-xl">Edit Transaction</DialogTitle>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-5 mt-4">
           {/* Transaction Type Toggle */}
           <div className="flex gap-2 p-1 bg-muted rounded-lg">

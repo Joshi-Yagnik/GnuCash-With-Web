@@ -42,19 +42,29 @@ export function AddTransactionDialog() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!description || !amount || !accountId) return;
 
-    addTransaction({
+    const transactionData: any = {
       description,
       amount: parseFloat(amount),
       type,
       category: category || type.charAt(0).toUpperCase() + type.slice(1),
       accountId,
-      toAccountId: type === "transfer" ? toAccountId : undefined,
       date: new Date(),
-      notes: notes || undefined,
-    });
+      isSplit: false
+    };
+
+    // Only include optional fields if they have values
+    if (type === "transfer" && toAccountId) {
+      transactionData.toAccountId = toAccountId;
+    }
+
+    if (notes) {
+      transactionData.notes = notes;
+    }
+
+    addTransaction(transactionData);
 
     // Reset form
     setDescription("");
@@ -78,7 +88,7 @@ export function AddTransactionDialog() {
         <DialogHeader>
           <DialogTitle className="font-display text-xl">New Transaction</DialogTitle>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-5 mt-4">
           {/* Transaction Type Toggle */}
           <div className="flex gap-2 p-1 bg-muted rounded-lg">

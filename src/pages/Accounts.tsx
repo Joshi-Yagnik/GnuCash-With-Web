@@ -1,9 +1,8 @@
 import { motion } from "framer-motion";
-import { Plus } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { AccountCard } from "@/components/AccountCard";
+import { AddAccountDialog } from "@/components/AddAccountDialog";
 import { useFinance } from "@/contexts/FinanceContext";
-import { Button } from "@/components/ui/button";
 
 export default function Accounts() {
   const { accounts, deleteAccount, getTotalBalance } = useFinance();
@@ -18,14 +17,14 @@ export default function Accounts() {
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <motion.h1 
+            <motion.h1
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               className="text-3xl font-display font-bold text-foreground"
             >
               Accounts
             </motion.h1>
-            <motion.p 
+            <motion.p
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
@@ -34,10 +33,7 @@ export default function Accounts() {
               Manage all your financial accounts in one place.
             </motion.p>
           </div>
-          <Button className="gap-2 shadow-soft hover:shadow-medium transition-all">
-            <Plus className="w-4 h-4" />
-            Add Account
-          </Button>
+          <AddAccountDialog />
         </div>
 
         {/* Total Balance Summary */}
@@ -64,9 +60,9 @@ export default function Accounts() {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {assetAccounts.map((account, index) => (
-                <AccountCard 
-                  key={account.id} 
-                  account={account} 
+                <AccountCard
+                  key={account.id}
+                  account={account}
                   index={index}
                   onDelete={deleteAccount}
                 />
@@ -83,9 +79,9 @@ export default function Accounts() {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {liabilityAccounts.map((account, index) => (
-                <AccountCard 
-                  key={account.id} 
-                  account={account} 
+                <AccountCard
+                  key={account.id}
+                  account={account}
                   index={index}
                   onDelete={deleteAccount}
                 />
