@@ -4,6 +4,7 @@ import { AppLayout } from "@/components/AppLayout";
 import { StatCard } from "@/components/StatCard";
 import { AccountCard } from "@/components/AccountCard";
 import { TransactionItem } from "@/components/TransactionItem";
+import { AccountActivityItem } from "@/components/AccountActivityItem";
 import { SpendingChart } from "@/components/SpendingChart";
 import { CategoryChart } from "@/components/CategoryChart";
 import { AddTransactionDialog } from "@/components/AddTransactionDialog";
@@ -15,11 +16,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 export default function Dashboard() {
   const {
     accounts,
-    transactions,
     getTotalBalance,
     getTotalIncome,
     getTotalExpenses,
-    deleteAccount
+    deleteAccount,
+    getRecentActivities
   } = useFinance();
 
   const totalBalance = getTotalBalance();
@@ -27,7 +28,7 @@ export default function Dashboard() {
   const totalExpenses = getTotalExpenses();
   const savings = totalIncome - totalExpenses;
 
-  const recentTransactions = transactions.slice(0, 5);
+  const recentItems = getRecentActivities(5);
 
   return (
     <AppLayout>
@@ -112,24 +113,32 @@ export default function Dashboard() {
         {/* Recent Transactions */}
         <section>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-display font-semibold text-foreground">Recent Transactions</h2>
+            <h2 className="text-xl font-display font-semibold text-foreground">Recent Activity</h2>
             <Button variant="ghost" size="sm" className="text-primary">
               View All
             </Button>
           </div>
           <Card className="shadow-soft">
             <CardContent className="p-4 space-y-3">
-              {recentTransactions.length === 0 ? (
+              {recentItems.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  No transactions yet. Add your first transaction to get started!
+                  No activity yet. Add your first transaction or account to get started!
                 </div>
               ) : (
-                recentTransactions.map((transaction, index) => (
-                  <TransactionItem
-                    key={transaction.id}
-                    transaction={transaction}
-                    index={index}
-                  />
+                recentItems.map((item, index) => (
+                  item.itemType === 'transaction' ? (
+                    <TransactionItem
+                      key={item.id}
+                      transaction={item}
+                      index={index}
+                    />
+                  ) : (
+                    <AccountActivityItem
+                      key={item.id}
+                      activity={item}
+                      index={index}
+                    />
+                  )
                 ))
               )}
             </CardContent>

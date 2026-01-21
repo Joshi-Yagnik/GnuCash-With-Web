@@ -16,8 +16,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useFinance } from "@/contexts/FinanceContext";
-import { Account, AccountType } from "@/lib/firebaseTypes";
+import { Account, AccountType, Currency } from "@/lib/firebaseTypes";
 import { cn } from "@/lib/utils";
+import { SUPPORTED_CURRENCIES, getCurrencySymbol } from "@/lib/currencyUtils";
 
 const accountTypes: { value: AccountType; label: string }[] = [
   { value: "asset", label: "Asset" },
@@ -52,6 +53,7 @@ export function EditAccountDialog({ account, open, onOpenChange }: EditAccountDi
   const [name, setName] = useState(account.name);
   const [type, setType] = useState<AccountType>(account.type);
   const [balance, setBalance] = useState(account.balance.toString());
+  const [currency, setCurrency] = useState<Currency>(account.currency || 'INR');
   const [color, setColor] = useState(account.color);
   const [icon, setIcon] = useState(account.icon);
 
@@ -59,19 +61,21 @@ export function EditAccountDialog({ account, open, onOpenChange }: EditAccountDi
     setName(account.name);
     setType(account.type);
     setBalance(account.balance.toString());
+    setCurrency(account.currency || 'INR');
     setColor(account.color);
     setIcon(account.icon);
   }, [account]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!name) return;
 
     await updateAccount(account.id, {
       name,
       type,
       balance: parseFloat(balance) || 0,
+      currency,
       color,
       icon,
     });
@@ -85,7 +89,7 @@ export function EditAccountDialog({ account, open, onOpenChange }: EditAccountDi
         <DialogHeader>
           <DialogTitle className="font-display text-xl">Edit Account</DialogTitle>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-5 mt-4">
           <div className="space-y-2">
             <Label htmlFor="edit-account-name">Account Name</Label>
@@ -117,17 +121,35 @@ export function EditAccountDialog({ account, open, onOpenChange }: EditAccountDi
           <div className="space-y-2">
             <Label htmlFor="edit-account-balance">Balance</Label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                {getCurrencySymbol(currency)}
+              </span>
               <Input
                 id="edit-account-balance"
                 type="number"
                 step="0.01"
                 placeholder="0.00"
-                className="pl-7"
+                className="pl-10"
                 value={balance}
                 onChange={(e) => setBalance(e.target.value)}
               />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="edit-account-currency">Currency</Label>
+            <Select value={currency} onValueChange={(v) => setCurrency(v as Currency)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select currency" />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(SUPPORTED_CURRENCIES).map(([code, info]) => (
+                  <SelectItem key={code} value={code}>
+                    {info.flag} {info.symbol} {info.name} ({code})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">

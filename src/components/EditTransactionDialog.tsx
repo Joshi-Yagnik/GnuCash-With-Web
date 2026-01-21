@@ -19,8 +19,9 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useFinance } from "@/contexts/FinanceContext";
-import { Transaction, TransactionType } from "@/lib/firebaseTypes";
+import { Transaction, TransactionType, Currency } from "@/lib/firebaseTypes";
 import { cn } from "@/lib/utils";
+import { SUPPORTED_CURRENCIES, getCurrencySymbol } from "@/lib/currencyUtils";
 
 const transactionTypes: { value: TransactionType; label: string; color: string }[] = [
   { value: "income", label: "Income", color: "bg-income text-income-foreground" },
@@ -39,6 +40,7 @@ export function EditTransactionDialog({ transaction, open, onOpenChange }: EditT
   const [type, setType] = useState<TransactionType>(transaction.type);
   const [description, setDescription] = useState(transaction.description);
   const [amount, setAmount] = useState(transaction.amount.toString());
+  const [currency, setCurrency] = useState<Currency>(transaction.currency || 'INR');
   const [accountId, setAccountId] = useState(transaction.accountId);
   const [toAccountId, setToAccountId] = useState(transaction.toAccountId || "");
   const [category, setCategory] = useState(transaction.category);
@@ -48,6 +50,7 @@ export function EditTransactionDialog({ transaction, open, onOpenChange }: EditT
     setType(transaction.type);
     setDescription(transaction.description);
     setAmount(transaction.amount.toString());
+    setCurrency(transaction.currency || 'INR');
     setAccountId(transaction.accountId);
     setToAccountId(transaction.toAccountId || "");
     setCategory(transaction.category);
@@ -62,6 +65,7 @@ export function EditTransactionDialog({ transaction, open, onOpenChange }: EditT
     const updates: any = {
       description,
       amount: parseFloat(amount),
+      currency,
       type,
       category: category || type.charAt(0).toUpperCase() + type.slice(1),
       accountId,
@@ -122,19 +126,37 @@ export function EditTransactionDialog({ transaction, open, onOpenChange }: EditT
           <div className="space-y-2">
             <Label htmlFor="edit-amount">Amount</Label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                {getCurrencySymbol(currency)}
+              </span>
               <Input
                 id="edit-amount"
                 type="number"
                 step="0.01"
                 min="0"
                 placeholder="0.00"
-                className="pl-7"
+                className="pl-10"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 required
               />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="edit-currency">Currency</Label>
+            <Select value={currency} onValueChange={(v) => setCurrency(v as Currency)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select currency" />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(SUPPORTED_CURRENCIES).map(([code, info]) => (
+                  <SelectItem key={code} value={code}>
+                    {info.flag} {info.symbol} {info.name} ({code})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">

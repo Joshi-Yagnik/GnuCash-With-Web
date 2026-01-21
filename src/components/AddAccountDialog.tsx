@@ -18,8 +18,9 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { useFinance } from "@/contexts/FinanceContext";
-import { AccountType } from "@/lib/firebaseTypes";
+import { AccountType, Currency } from "@/lib/firebaseTypes";
 import { cn } from "@/lib/utils";
+import { SUPPORTED_CURRENCIES, getCurrencySymbol } from "@/lib/currencyUtils";
 
 const accountTypes: { value: AccountType; label: string; description: string }[] = [
     { value: "asset", label: "Asset", description: "Cash, bank accounts, investments" },
@@ -57,7 +58,7 @@ export function AddAccountDialog() {
     const [balance, setBalance] = useState("0");
     const [color, setColor] = useState("#3b82f6");
     const [icon, setIcon] = useState("wallet");
-    const [currency, setCurrency] = useState("USD");
+    const [currency, setCurrency] = useState<Currency>("INR");
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -89,7 +90,7 @@ export function AddAccountDialog() {
             setBalance("0");
             setColor("#3b82f6");
             setIcon("wallet");
-            setCurrency("USD");
+            setCurrency("INR");
             setOpen(false);
         } catch (error) {
             console.error("Error adding account:", error);
@@ -144,13 +145,15 @@ export function AddAccountDialog() {
                     <div className="space-y-2">
                         <Label htmlFor="account-balance">Initial Balance</Label>
                         <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                                {getCurrencySymbol(currency)}
+                            </span>
                             <Input
                                 id="account-balance"
                                 type="number"
                                 step="0.01"
                                 placeholder="0.00"
-                                className="pl-7"
+                                className="pl-10"
                                 value={balance}
                                 onChange={(e) => setBalance(e.target.value)}
                             />
@@ -162,16 +165,16 @@ export function AddAccountDialog() {
 
                     <div className="space-y-2">
                         <Label htmlFor="account-currency">Currency</Label>
-                        <Select value={currency} onValueChange={setCurrency}>
+                        <Select value={currency} onValueChange={(v) => setCurrency(v as Currency)}>
                             <SelectTrigger>
                                 <SelectValue placeholder="Select currency" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="USD">USD ($)</SelectItem>
-                                <SelectItem value="EUR">EUR (€)</SelectItem>
-                                <SelectItem value="GBP">GBP (£)</SelectItem>
-                                <SelectItem value="INR">INR (₹)</SelectItem>
-                                <SelectItem value="JPY">JPY (¥)</SelectItem>
+                                {Object.entries(SUPPORTED_CURRENCIES).map(([code, info]) => (
+                                    <SelectItem key={code} value={code}>
+                                        {info.flag} {info.symbol} {info.name} ({code})
+                                    </SelectItem>
+                                ))}
                             </SelectContent>
                         </Select>
                     </div>

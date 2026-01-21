@@ -14,7 +14,8 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
-import { Account, Transaction, Category, AccountType, TransactionType, Split, SplitType } from "@/lib/firebaseTypes";
+import { Account, Transaction, Category, AccountType, TransactionType, Split, SplitType, AccountActivity } from "@/lib/firebaseTypes";
+import { convertToINR, FALLBACK_EXCHANGE_RATES } from "@/lib/currencyUtils";
 
 export function useFirestoreData() {
   const { user } = useAuth();
@@ -22,6 +23,7 @@ export function useFirestoreData() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [splits, setSplits] = useState<Split[]>([]);
+  const [accountActivities, setAccountActivities] = useState<AccountActivity[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Subscribe to accounts
@@ -31,6 +33,7 @@ export function useFirestoreData() {
       setTransactions([]);
       setCategories([]);
       setSplits([]);
+      setAccountActivities([]);
       setLoading(false);
       return;
     }
@@ -122,11 +125,37 @@ export function useFirestoreData() {
       }
     );
 
+    // Subscribe to account activities
+    const activitiesQuery = query(
+      collection(db, "accountActivities"),
+      where("userId", "==", user.uid)
+    );
+
+    const unsubscribeActivities = onSnapshot(
+      activitiesQuery,
+      (snapshot) => {
+        const activitiesData = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+          date: doc.data().date?.toDate() || new Date(),
+          createdAt: doc.data().createdAt?.toDate() || new Date(),
+        })) as AccountActivity[];
+        // Sort by date descending
+        activitiesData.sort((a, b) => b.date.getTime() - a.date.getTime());
+        console.log("Account activities loaded:", activitiesData.length);
+        setAccountActivities(activitiesData);
+      },
+      (error) => {
+        console.error("Error loading account activities:", error);
+      }
+    );
+
     return () => {
       unsubscribeAccounts();
       unsubscribeTransactions();
       unsubscribeCategories();
       unsubscribeSplits();
+      unsubscribeActivities();
     };
   }, [user]);
 
@@ -134,24 +163,70 @@ export function useFirestoreData() {
     return accounts
       .filter((a) => a.type === "asset" || a.type === "liability")
       .reduce((sum, account) => {
+        // Convert account balance to INR
+        const balanceInINR = convertToINR(account.balance, account.currency || 'INR', FALLBACK_EXCHANGE_RATES);
+
         if (account.type === "liability") {
-          return sum - account.balance;
+          return sum - balanceInINR;
         }
-        return sum + account.balance;
+        return sum + balanceInINR;
       }, 0);
   }, [accounts]);
 
   const getTotalIncome = useCallback(() => {
-    return transactions
-      .filter((t) => t.type === "income")
-      .reduce((sum, t) => sum + t.amount, 0);
-  }, [transactions]);
+    // Income from transactions
+    const incomeTransactions = transactions.filter((t) => t.type === "income");
+    const transactionIncome = incomeTransactions.reduce((sum, t) => {
+      const amountInINR = convertToINR(t.amount, t.currency || 'INR', FALLBACK_EXCHANGE_RATES);
+      return sum + amountInINR;
+    }, 0);
+
+    // Income from account balance increases
+    const balanceIncreases = accountActivities
+      .filter((a) => a.changes.balance && a.changes.balance.new > a.changes.balance.old)
+      .reduce((sum, a) => {
+        if (a.changes.balance) {
+          const increase = a.changes.balance.new - a.changes.balance.old;
+          // Get the currency from the activity (new currency if changed, or find the account)
+          const currency = a.changes.currency?.new || 'INR';
+          const increaseInINR = convertToINR(increase, currency, FALLBACK_EXCHANGE_RATES);
+          return sum + increaseInINR;
+        }
+        return sum;
+      }, 0);
+
+    const total = transactionIncome + balanceIncreases;
+    console.log("Total Income:", total, "from", incomeTransactions.length, "transactions +", balanceIncreases.toFixed(2), "from balance increases");
+    return total;
+  }, [transactions, accountActivities]);
 
   const getTotalExpenses = useCallback(() => {
-    return transactions
-      .filter((t) => t.type === "expense")
-      .reduce((sum, t) => sum + t.amount, 0);
-  }, [transactions]);
+    // Expenses from transactions
+    const expenseTransactions = transactions.filter((t) => t.type === "expense");
+    const transactionExpenses = expenseTransactions.reduce((sum, t) => {
+      const amountInINR = convertToINR(t.amount, t.currency || 'INR', FALLBACK_EXCHANGE_RATES);
+      return sum + amountInINR;
+    }, 0);
+
+    // Expenses from account balance decreases
+    const balanceDecreases = accountActivities
+      .filter((a) => a.changes.balance && a.changes.balance.new < a.changes.balance.old)
+      .reduce((sum, a) => {
+        if (a.changes.balance) {
+          const decrease = a.changes.balance.old - a.changes.balance.new;
+          // Get the currency from the activity (old currency if changed)
+          const currency = a.changes.currency?.old || 'INR';
+          const decreaseInINR = convertToINR(decrease, currency, FALLBACK_EXCHANGE_RATES);
+          return sum + decreaseInINR;
+        }
+        return sum;
+      }, 0);
+
+    const total = transactionExpenses + balanceDecreases;
+    console.log("Total Expenses:", total, "from", expenseTransactions.length, "transactions +", balanceDecreases.toFixed(2), "from balance decreases");
+    console.log("All transactions:", transactions.map(t => ({ id: t.id, type: t.type, amount: t.amount })));
+    return total;
+  }, [transactions, accountActivities]);
 
   const getAccountById = useCallback(
     (id: string) => accounts.find((a) => a.id === id),
@@ -174,12 +249,48 @@ export function useFirestoreData() {
 
   const updateAccount = useCallback(
     async (id: string, updates: Partial<Account>) => {
+      if (!user) return;
+
+      // Get the current account to track changes
+      const oldAccount = accounts.find((a) => a.id === id);
+
+      // Update the account
       await updateDoc(doc(db, "accounts", id), {
         ...updates,
         updatedAt: Timestamp.now(),
       });
+
+      // Log activity if balance or currency changed
+      if (oldAccount && (updates.balance !== undefined || updates.currency !== undefined || updates.name !== undefined)) {
+        const changes: AccountActivity['changes'] = {};
+
+        if (updates.balance !== undefined && updates.balance !== oldAccount.balance) {
+          changes.balance = { old: oldAccount.balance, new: updates.balance };
+        }
+
+        if (updates.currency !== undefined && updates.currency !== oldAccount.currency) {
+          changes.currency = { old: oldAccount.currency, new: updates.currency };
+        }
+
+        if (updates.name !== undefined && updates.name !== oldAccount.name) {
+          changes.name = { old: oldAccount.name, new: updates.name };
+        }
+
+        // Only create activity if there are actual changes
+        if (Object.keys(changes).length > 0) {
+          await addDoc(collection(db, "accountActivities"), {
+            userId: user.uid,
+            accountId: id,
+            accountName: updates.name || oldAccount.name,
+            type: changes.balance ? 'balance_update' : changes.currency ? 'currency_update' : 'account_update',
+            changes,
+            date: Timestamp.now(),
+            createdAt: Timestamp.now(),
+          });
+        }
+      }
     },
-    []
+    [user, accounts]
   );
 
   const deleteAccount = useCallback(async (id: string) => {
@@ -205,16 +316,31 @@ export function useFirestoreData() {
 
       const batch = writeBatch(db);
 
-      // Add transaction
+      // Add transaction - filter out undefined values
       const transactionRef = doc(collection(db, "transactions"));
-      batch.set(transactionRef, {
-        ...transaction,
+      const transactionData: any = {
         userId: user.uid,
+        description: transaction.description,
+        amount: transaction.amount,
+        currency: transaction.currency || 'INR',
+        type: transaction.type,
+        category: transaction.category,
+        accountId: transaction.accountId,
         isSplit: false, // Simple transaction
         date: Timestamp.fromDate(transaction.date instanceof Date ? transaction.date : new Date(transaction.date)),
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
-      });
+      };
+
+      // Only add optional fields if they have values
+      if (transaction.notes) {
+        transactionData.notes = transaction.notes;
+      }
+      if (transaction.toAccountId) {
+        transactionData.toAccountId = transaction.toAccountId;
+      }
+
+      batch.set(transactionRef, transactionData);
 
       // Update account balance
       const account = accounts.find((a) => a.id === transaction.accountId);
@@ -420,16 +546,31 @@ export function useFirestoreData() {
 
       const batch = writeBatch(db);
 
-      // Add transaction
+      // Add transaction - filter out undefined values
       const transactionRef = doc(collection(db, "transactions"));
-      batch.set(transactionRef, {
-        ...transaction,
+      const transactionData: any = {
         userId: user.uid,
+        description: transaction.description,
+        amount: transaction.amount,
+        currency: transaction.currency || 'INR',
+        type: transaction.type,
+        category: transaction.category,
+        accountId: transaction.accountId,
         isSplit: true,
         date: Timestamp.fromDate(transaction.date instanceof Date ? transaction.date : new Date(transaction.date)),
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
-      });
+      };
+
+      // Only add optional fields if they have values
+      if (transaction.notes) {
+        transactionData.notes = transaction.notes;
+      }
+      if (transaction.toAccountId) {
+        transactionData.toAccountId = transaction.toAccountId;
+      }
+
+      batch.set(transactionRef, transactionData);
 
       // Add splits and update account balances
       for (const splitEntry of splitEntries) {
@@ -500,11 +641,30 @@ export function useFirestoreData() {
     return categories.filter((c) => c.type === "expense");
   }, [categories]);
 
+  // Get recent activities and transactions combined
+  const getRecentActivities = useCallback((limit: number = 10) => {
+    // Combine transactions and account activities
+    const combined: Array<(Transaction & { itemType: 'transaction' }) | (AccountActivity & { itemType: 'activity' })> = [
+      ...transactions.map(t => ({ ...t, itemType: 'transaction' as const })),
+      ...accountActivities.map(a => ({ ...a, itemType: 'activity' as const }))
+    ];
+
+    // Sort by date descending
+    combined.sort((a, b) => {
+      const dateA = a.itemType === 'transaction' ? a.date : a.createdAt;
+      const dateB = b.itemType === 'transaction' ? b.date : b.createdAt;
+      return dateB.getTime() - dateA.getTime();
+    });
+
+    return combined.slice(0, limit);
+  }, [transactions, accountActivities]);
+
   return {
     accounts,
     transactions,
     categories,
     splits,
+    accountActivities,
     loading,
     getTotalBalance,
     getTotalIncome,
@@ -526,5 +686,6 @@ export function useFirestoreData() {
     getAssetAccounts,
     getIncomeCategories,
     getExpenseCategories,
+    getRecentActivities,
   };
 }

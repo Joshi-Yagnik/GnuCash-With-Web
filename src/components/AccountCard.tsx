@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { 
-  Wallet, 
-  Building2, 
-  CreditCard, 
+import {
+  Wallet,
+  Building2,
+  CreditCard,
   TrendingUp,
   MoreVertical
 } from "lucide-react";
@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { EditAccountDialog } from "./EditAccountDialog";
+import { formatCurrency, formatWithINREquivalent } from "@/lib/currencyUtils";
 
 interface AccountCardProps {
   account: Account;
@@ -59,7 +60,7 @@ export function AccountCard({ account, index = 0, onDelete }: AccountCardProps) 
     >
       <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
       <div className="absolute bottom-0 left-0 w-20 h-20 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
-      
+
       <div className="relative z-10">
         <div className="flex items-start justify-between mb-4">
           <div className="p-2.5 bg-white/20 rounded-lg backdrop-blur-sm">
@@ -67,9 +68,9 @@ export function AccountCard({ account, index = 0, onDelete }: AccountCardProps) 
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <MoreVertical className="w-4 h-4" />
@@ -80,7 +81,7 @@ export function AccountCard({ account, index = 0, onDelete }: AccountCardProps) 
                 Edit Account
               </DropdownMenuItem>
               <DropdownMenuItem>View Transactions</DropdownMenuItem>
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 className="text-destructive"
                 onClick={() => onDelete?.(account.id)}
               >
@@ -92,15 +93,20 @@ export function AccountCard({ account, index = 0, onDelete }: AccountCardProps) 
 
         <p className="text-sm text-white/80 font-medium mb-1">{account.name}</p>
         <p className="text-2xl font-display font-bold tracking-tight">
-          {isNegative ? "-" : ""}${Math.abs(account.balance).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+          {formatCurrency(account.balance, account.currency || 'INR')}
         </p>
+        {account.currency && account.currency !== 'INR' && (
+          <p className="text-xs text-white/70 mt-1">
+            {formatWithINREquivalent(account.balance, account.currency)}
+          </p>
+        )}
         <p className="text-xs text-white/60 mt-2 capitalize">{account.type} Account</p>
       </div>
 
-      <EditAccountDialog 
-        account={account} 
-        open={editOpen} 
-        onOpenChange={setEditOpen} 
+      <EditAccountDialog
+        account={account}
+        open={editOpen}
+        onOpenChange={setEditOpen}
       />
     </motion.div>
   );

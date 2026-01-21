@@ -59,7 +59,7 @@ export function StatCard({ title, value, type, index = 0 }: StatCardProps) {
       </div>
       <p className="text-sm text-muted-foreground font-medium">{title}</p>
       <p className={cn("text-2xl font-display font-bold mt-1", config.color)}>
-        {isNegative ? "-" : ""}${Math.abs(value).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+        {isNegative ? "-" : ""}₹{Math.abs(value).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
       </p>
     </motion.div>
   );

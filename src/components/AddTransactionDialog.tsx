@@ -20,8 +20,9 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useFinance } from "@/contexts/FinanceContext";
-import { TransactionType } from "@/lib/firebaseTypes";
+import { TransactionType, Currency } from "@/lib/firebaseTypes";
 import { cn } from "@/lib/utils";
+import { SUPPORTED_CURRENCIES, getCurrencySymbol } from "@/lib/currencyUtils";
 
 const transactionTypes: { value: TransactionType; label: string; color: string }[] = [
   { value: "income", label: "Income", color: "bg-income text-income-foreground" },
@@ -30,11 +31,12 @@ const transactionTypes: { value: TransactionType; label: string; color: string }
 ];
 
 export function AddTransactionDialog() {
-  const { accounts, addTransaction } = useFinance();
+  const { accounts, addTransaction, getAccountById } = useFinance();
   const [open, setOpen] = useState(false);
   const [type, setType] = useState<TransactionType>("expense");
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
+  const [currency, setCurrency] = useState<Currency>("INR");
   const [accountId, setAccountId] = useState("");
   const [toAccountId, setToAccountId] = useState("");
   const [category, setCategory] = useState("");
@@ -48,6 +50,7 @@ export function AddTransactionDialog() {
     const transactionData: any = {
       description,
       amount: parseFloat(amount),
+      currency,
       type,
       category: category || type.charAt(0).toUpperCase() + type.slice(1),
       accountId,
@@ -69,11 +72,21 @@ export function AddTransactionDialog() {
     // Reset form
     setDescription("");
     setAmount("");
+    setCurrency("INR");
     setAccountId("");
     setToAccountId("");
     setCategory("");
     setNotes("");
     setOpen(false);
+  };
+
+  // When account changes, set currency to account's currency
+  const handleAccountChange = (accId: string) => {
+    setAccountId(accId);
+    const account = getAccountById(accId);
+    if (account) {
+      setCurrency(account.currency || 'INR');
+    }
   };
 
   return (
@@ -123,14 +136,16 @@ export function AddTransactionDialog() {
           <div className="space-y-2">
             <Label htmlFor="amount">Amount</Label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                {getCurrencySymbol(currency)}
+              </span>
               <Input
                 id="amount"
                 type="number"
                 step="0.01"
                 min="0"
                 placeholder="0.00"
-                className="pl-7"
+                className="pl-10"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 required
@@ -139,17 +154,33 @@ export function AddTransactionDialog() {
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="currency">Currency</Label>
+            <Select value={currency} onValueChange={(v) => setCurrency(v as Currency)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select currency" />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(SUPPORTED_CURRENCIES).map(([code, info]) => (
+                  <SelectItem key={code} value={code}>
+                    {info.flag} {info.symbol} {info.name} ({code})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="account">
               {type === "transfer" ? "From Account" : "Account"}
             </Label>
-            <Select value={accountId} onValueChange={setAccountId} required>
+            <Select value={accountId} onValueChange={handleAccountChange} required>
               <SelectTrigger>
                 <SelectValue placeholder="Select account" />
               </SelectTrigger>
               <SelectContent>
                 {accounts.map((account) => (
                   <SelectItem key={account.id} value={account.id}>
-                    {account.name}
+                    {account.name} ({getCurrencySymbol(account.currency || 'INR')})
                   </SelectItem>
                 ))}
               </SelectContent>

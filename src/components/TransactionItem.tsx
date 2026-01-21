@@ -14,6 +14,7 @@ import { useFinance } from "@/contexts/FinanceContext";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { EditTransactionDialog } from "./EditTransactionDialog";
+import { formatCurrency } from "@/lib/currencyUtils";
 
 interface TransactionItemProps {
   transaction: Transaction;
@@ -95,7 +96,7 @@ export function TransactionItem({ transaction, index = 0 }: TransactionItemProps
         <div className="text-right">
           <p className={cn("font-semibold", config.color)}>
             {transaction.type === "income" ? "+" : transaction.type === "expense" ? "-" : ""}
-            ${transaction.amount.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+            {formatCurrency(transaction.amount, transaction.currency || 'INR')}
           </p>
           <p className="text-xs text-muted-foreground">{formattedDate}</p>
         </div>
