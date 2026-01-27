@@ -1,15 +1,21 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { 
-  LayoutDashboard, 
-  Wallet, 
-  ArrowRightLeft, 
-  PieChart, 
+import {
+  LayoutDashboard,
+  Wallet,
+  ArrowRightLeft,
+  PieChart,
   Settings,
   HelpCircle,
   LogOut,
   Menu,
   ChevronLeft,
-  TrendingUp
+  TrendingUp,
+  Target,
+  Tag,
+  Repeat,
+  Upload,
+  Hash,
+  BookOpen
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { NavLink } from "@/components/NavLink";
@@ -29,11 +35,26 @@ import {
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 
-const mainMenuItems = [
+// Finance Section
+const financeMenuItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Accounts", url: "/accounts", icon: Wallet },
   { title: "Transactions", url: "/transactions", icon: ArrowRightLeft },
+  { title: "Budgets", url: "/budgets", icon: Target },
+];
+
+// Analysis Section
+const analysisMenuItems = [
   { title: "Reports", url: "/reports", icon: PieChart },
+  { title: "Categories", url: "/categories", icon: Tag },
+];
+
+// Tools Section
+const toolsMenuItems = [
+  { title: "Books", url: "/books", icon: BookOpen },
+  { title: "Recurring", url: "/recurring", icon: Repeat },
+  { title: "Import/Export", url: "/import-export", icon: Upload },
+  { title: "Tags", url: "/tags", icon: Hash },
 ];
 
 const bottomMenuItems = [
@@ -54,7 +75,7 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar 
+    <Sidebar
       collapsible="icon"
       className="border-r-0"
     >
@@ -75,13 +96,78 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="px-2">
+        {/* Finance Section */}
         <SidebarGroup>
           <SidebarGroupLabel className="text-sidebar-foreground/50 px-3">
-            {!isCollapsed && "Main Menu"}
+            {!isCollapsed && "Finance"}
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {mainMenuItems.map((item) => {
+              {financeMenuItems.map((item) => {
+                const isActive = location.pathname === item.url;
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <NavLink
+                        to={item.url}
+                        end
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+                          "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+                        )}
+                        activeClassName="bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary"
+                      >
+                        <item.icon className="w-5 h-5 flex-shrink-0" />
+                        {!isCollapsed && <span className="font-medium">{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Analysis Section */}
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-sidebar-foreground/50 px-3">
+            {!isCollapsed && "Analysis"}
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {analysisMenuItems.map((item) => {
+                const isActive = location.pathname === item.url;
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <NavLink
+                        to={item.url}
+                        end
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+                          "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+                        )}
+                        activeClassName="bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary"
+                      >
+                        <item.icon className="w-5 h-5 flex-shrink-0" />
+                        {!isCollapsed && <span className="font-medium">{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Tools Section */}
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-sidebar-foreground/50 px-3">
+            {!isCollapsed && "Tools"}
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {toolsMenuItems.map((item) => {
                 const isActive = location.pathname === item.url;
                 return (
                   <SidebarMenuItem key={item.title}>

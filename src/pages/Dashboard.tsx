@@ -8,8 +8,11 @@ import { AccountActivityItem } from "@/components/AccountActivityItem";
 import { SpendingChart } from "@/components/SpendingChart";
 import { CategoryChart } from "@/components/CategoryChart";
 import { AddTransactionDialog } from "@/components/AddTransactionDialog";
+import { AddAccountDialog } from "@/components/AddAccountDialog";
 import { SplitTransactionDialog } from "@/components/SplitTransactionDialog";
+import { useEffect } from "react";
 import { useFinance } from "@/contexts/FinanceContext";
+import { useRecurring } from "@/hooks/useRecurring";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -22,6 +25,12 @@ export default function Dashboard() {
     deleteAccount,
     getRecentActivities
   } = useFinance();
+
+  const { processDueTransactions } = useRecurring();
+
+  useEffect(() => {
+    processDueTransactions();
+  }, [processDueTransactions]);
 
   const totalBalance = getTotalBalance();
   const totalIncome = getTotalIncome();
@@ -70,10 +79,7 @@ export default function Dashboard() {
         <section>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-display font-semibold text-foreground">Your Accounts</h2>
-            <Button variant="ghost" size="sm" className="text-primary">
-              <Plus className="w-4 h-4 mr-1" />
-              Add Account
-            </Button>
+            <AddAccountDialog />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             {accounts.map((account, index) => (
@@ -132,13 +138,13 @@ export default function Dashboard() {
                       transaction={item}
                       index={index}
                     />
-                  ) : (
+                  ) : item.itemType === 'activity' ? (
                     <AccountActivityItem
                       key={item.id}
                       activity={item}
                       index={index}
                     />
-                  )
+                  ) : null
                 ))
               )}
             </CardContent>

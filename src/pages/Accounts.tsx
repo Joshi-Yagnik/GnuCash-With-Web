@@ -2,14 +2,18 @@ import { motion } from "framer-motion";
 import { AppLayout } from "@/components/AppLayout";
 import { AccountCard } from "@/components/AccountCard";
 import { AddAccountDialog } from "@/components/AddAccountDialog";
+import { FavoriteAccountsList } from "@/components/FavoriteAccountsList";
+import { RecentAccountsList } from "@/components/RecentAccountsList";
 import { useFinance } from "@/contexts/FinanceContext";
+import { useFavoriteAccounts } from "@/hooks/useFavoriteAccounts";
 
 export default function Accounts() {
   const { accounts, deleteAccount, getTotalBalance } = useFinance();
+  const { favoriteAccountIds } = useFavoriteAccounts();
   const totalBalance = getTotalBalance();
 
-  const assetAccounts = accounts.filter(a => a.balance >= 0);
-  const liabilityAccounts = accounts.filter(a => a.balance < 0);
+  const assetAccounts = accounts.filter(a => a.balance >= 0 && !favoriteAccountIds.includes(a.id));
+  const liabilityAccounts = accounts.filter(a => a.balance < 0 && !favoriteAccountIds.includes(a.id));
 
   return (
     <AppLayout>
@@ -33,9 +37,9 @@ export default function Accounts() {
               Manage all your financial accounts in one place.
             </motion.p>
           </div>
-          <AddAccountDialog />
         </div>
 
+        {/* Total Balance Summary */}
         {/* Total Balance Summary */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -52,44 +56,69 @@ export default function Accounts() {
           </p>
         </motion.div>
 
+        {/* Favorite Accounts */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          <FavoriteAccountsList />
+        </motion.div>
+
+        {/* Recent Accounts */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+        >
+          <RecentAccountsList />
+        </motion.div>
+
         {/* Asset Accounts */}
-        {assetAccounts.length > 0 && (
-          <section>
-            <h2 className="text-xl font-display font-semibold text-foreground mb-4">
-              Assets
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {assetAccounts.map((account, index) => (
-                <AccountCard
-                  key={account.id}
-                  account={account}
-                  index={index}
-                  onDelete={deleteAccount}
-                />
-              ))}
-            </div>
-          </section>
-        )}
+        {
+          assetAccounts.length > 0 && (
+            <section>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-display font-semibold text-foreground">
+                  Assets
+                </h2>
+
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {assetAccounts.map((account, index) => (
+                  <AccountCard
+                    key={account.id}
+                    account={account}
+                    index={index}
+                    onDelete={deleteAccount}
+                  />
+                ))}
+              </div>
+            </section>
+          )
+        }
 
         {/* Liability Accounts */}
-        {liabilityAccounts.length > 0 && (
-          <section>
-            <h2 className="text-xl font-display font-semibold text-foreground mb-4">
-              Liabilities
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {liabilityAccounts.map((account, index) => (
-                <AccountCard
-                  key={account.id}
-                  account={account}
-                  index={index}
-                  onDelete={deleteAccount}
-                />
-              ))}
-            </div>
-          </section>
-        )}
-      </div>
-    </AppLayout>
+        {
+          liabilityAccounts.length > 0 && (
+            <section>
+              <h2 className="text-xl font-display font-semibold text-foreground mb-4">
+                Liabilities
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {liabilityAccounts.map((account, index) => (
+                  <AccountCard
+                    key={account.id}
+                    account={account}
+                    index={index}
+                    onDelete={deleteAccount}
+                  />
+                ))}
+              </div>
+            </section>
+          )
+        }
+      </div >
+    </AppLayout >
   );
 }

@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { EditTransactionDialog } from "./EditTransactionDialog";
 import { formatCurrency } from "@/lib/currencyUtils";
+import { inferTransactionType } from "@/lib/accountingUtils";
 
 interface TransactionItemProps {
   transaction: Transaction;
@@ -45,12 +46,72 @@ const typeConfig = {
 export function TransactionItem({ transaction, index = 0 }: TransactionItemProps) {
   const { getAccountById, deleteTransaction } = useFinance();
   const [editOpen, setEditOpen] = useState(false);
-  const config = typeConfig[transaction.type];
+
+  // Derive display properties from splits (Double-Entry Logic)
+  // TODO: Pass viewedAccountId prop if we want account-specific perspective (e.g. Red/Green based on debit/credit)
+  // For global view, we infer based on account types involved.
+
+  // Helper to get type
+  const displayType = (transaction as any).type || inferTransactionType(transaction.splits);
+
+  // Helper to get amount (use positive value of the transaction)
+  // For simple transactions, it's the absolute value of any split
+  const displayAmount = (transaction as any).amount ??
+    Math.max(...transaction.splits.map(s => Math.abs(s.value)));
+
+  const config = typeConfig[displayType] || typeConfig.transfer;
   const Icon = config.icon;
-  const account = getAccountById(transaction.accountId);
-  const toAccount = transaction.toAccountId
-    ? getAccountById(transaction.toAccountId)
-    : null;
+
+  // Identify accounts for display
+  // We need to find "The Account" and "The Other Account"
+  // For global view:
+  // Income: From Income Account -> To Asset Account
+  // Expense: From Asset Account -> To Expense Account
+  // Transfer: From Asset A -> To Asset B
+
+  let primaryAccountName = "Unknown";
+  let secondaryAccountName = null;
+
+  if (transaction.splits && transaction.splits.length > 0) {
+    if (displayType === 'income') {
+      // Primary: Where money went (Asset)
+      // Secondary: Where it came from (Income)
+      const assetSplit = transaction.splits.find(s => s.accountType === 'asset');
+      const incomeSplit = transaction.splits.find(s => s.accountType === 'income');
+      primaryAccountName = assetSplit?.accountPath || getAccountById(assetSplit?.accountId || "")?.name || "Asset";
+      secondaryAccountName = incomeSplit?.accountPath || getAccountById(incomeSplit?.accountId || "")?.name || "Income";
+    } else if (displayType === 'expense') {
+      // Primary: Where it went (Expense)
+      // Secondary: Where money came from (Asset)
+      const expenseSplit = transaction.splits.find(s => s.accountType === 'expense');
+      const assetSplit = transaction.splits.find(s => s.accountType === 'asset');
+      // Swap names for display usually logic is "Paid to Expense using Asset"
+      // So "Expense Name" is primary? Or "Asset Name"?
+      // Existing UI shows "Account" then "To Account".
+      primaryAccountName = assetSplit?.accountPath || getAccountById(assetSplit?.accountId || "")?.name || "Asset";
+      secondaryAccountName = expenseSplit?.accountPath || getAccountById(expenseSplit?.accountId || "")?.name || "Expense";
+    } else {
+      // Transfer
+      // Just take first two splits
+      const split1 = transaction.splits[0];
+      const split2 = transaction.splits[1];
+      // Try to make source first? (Negative value)
+      const source = split1.value < 0 ? split1 : split2;
+      const dest = split1.value < 0 ? split2 : split1;
+
+      primaryAccountName = source?.accountPath || getAccountById(source?.accountId || "")?.name || "From";
+      secondaryAccountName = dest?.accountPath || getAccountById(dest?.accountId || "")?.name || "To";
+    }
+  } else {
+    // Legacy fallback
+    const acct = getAccountById((transaction as any).accountId);
+    const toAcct = (transaction as any).toAccountId ? getAccountById((transaction as any).toAccountId) : null;
+    primaryAccountName = acct?.name || "Unknown";
+    secondaryAccountName = toAcct?.name;
+    if (!secondaryAccountName && (transaction as any).category) {
+      secondaryAccountName = (transaction as any).category;
+    }
+  }
 
   const formattedDate = format(new Date(transaction.date), "MMM dd, yyyy");
 
@@ -73,7 +134,8 @@ export function TransactionItem({ transaction, index = 0 }: TransactionItemProps
         <div>
           <div className="flex items-center gap-2">
             <p className="font-medium text-foreground">{transaction.description}</p>
-            {transaction.isSplit && (
+            {/* Split badge? transaction.splits.length > 2? */}
+            {transaction.splits && transaction.splits.length > 2 && (
               <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
                 <Split className="w-3 h-3" />
                 <span>Split</span>
@@ -81,11 +143,11 @@ export function TransactionItem({ transaction, index = 0 }: TransactionItemProps
             )}
           </div>
           <div className="flex items-center gap-2 mt-0.5">
-            <span className="text-sm text-muted-foreground">{account?.name}</span>
-            {toAccount && (
+            <span className="text-sm text-muted-foreground">{primaryAccountName}</span>
+            {secondaryAccountName && (
               <>
                 <ArrowLeftRight className="w-3 h-3 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">{toAccount.name}</span>
+                <span className="text-sm text-muted-foreground">{secondaryAccountName}</span>
               </>
             )}
           </div>
@@ -95,8 +157,8 @@ export function TransactionItem({ transaction, index = 0 }: TransactionItemProps
       <div className="flex items-center gap-4">
         <div className="text-right">
           <p className={cn("font-semibold", config.color)}>
-            {transaction.type === "income" ? "+" : transaction.type === "expense" ? "-" : ""}
-            {formatCurrency(transaction.amount, transaction.currency || 'INR')}
+            {displayType === "income" ? "+" : displayType === "expense" ? "-" : ""}
+            {formatCurrency(displayAmount, transaction.currency || 'INR')}
           </p>
           <p className="text-xs text-muted-foreground">{formattedDate}</p>
         </div>

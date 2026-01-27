@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Plus, X } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -20,74 +19,57 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useFinance } from "@/contexts/FinanceContext";
-import { TransactionType, Currency } from "@/lib/firebaseTypes";
-import { cn } from "@/lib/utils";
-import { SUPPORTED_CURRENCIES, getCurrencySymbol } from "@/lib/currencyUtils";
-
-const transactionTypes: { value: TransactionType; label: string; color: string }[] = [
-  { value: "income", label: "Income", color: "bg-income text-income-foreground" },
-  { value: "expense", label: "Expense", color: "bg-expense text-expense-foreground" },
-  { value: "transfer", label: "Transfer", color: "bg-transfer text-transfer-foreground" },
-];
+import { Currency } from "@/lib/firebaseTypes";
+import { getCurrencySymbol } from "@/lib/currencyUtils";
 
 export function AddTransactionDialog() {
-  const { accounts, addTransaction, getAccountById } = useFinance();
+  const { allAccounts, addTransaction, getAccountById } = useFinance();
+  // Fallback to accounts or just use allAccounts exclusively.
+  // Ideally getAccountById logic needs update too if it relies on accounts list?
+  // getAccountById uses `accounts` in hook. I should update getAccountById in hook to use allAccounts too or update it locally.
+  // Actually, getAccountById should look in allAccounts. I'll update the hook for that separately.
+  // For now, let's assume getAccountById works or I won't rely on it for currency if it's a category.
+  const accounts = allAccounts; // Use unified list locally
   const [open, setOpen] = useState(false);
-  const [type, setType] = useState<TransactionType>("expense");
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
-  const [currency, setCurrency] = useState<Currency>("INR");
-  const [accountId, setAccountId] = useState("");
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [number, setNumber] = useState("");
+  const [fromAccountId, setFromAccountId] = useState("");
   const [toAccountId, setToAccountId] = useState("");
-  const [category, setCategory] = useState("");
   const [notes, setNotes] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!description || !amount || !accountId) return;
+    if (!description || !amount || !fromAccountId || !toAccountId) return;
 
-    const transactionData: any = {
-      description,
-      amount: parseFloat(amount),
-      currency,
-      type,
-      category: category || type.charAt(0).toUpperCase() + type.slice(1),
-      accountId,
-      date: new Date(),
-      isSplit: false
-    };
+    try {
+      await addTransaction({
+        description,
+        amount: parseFloat(amount),
+        fromAccountId,
+        toAccountId,
+        date: new Date(date),
+        number: number || undefined,
+        notes: notes || undefined,
+      });
 
-    // Only include optional fields if they have values
-    if (type === "transfer" && toAccountId) {
-      transactionData.toAccountId = toAccountId;
-    }
-
-    if (notes) {
-      transactionData.notes = notes;
-    }
-
-    addTransaction(transactionData);
-
-    // Reset form
-    setDescription("");
-    setAmount("");
-    setCurrency("INR");
-    setAccountId("");
-    setToAccountId("");
-    setCategory("");
-    setNotes("");
-    setOpen(false);
-  };
-
-  // When account changes, set currency to account's currency
-  const handleAccountChange = (accId: string) => {
-    setAccountId(accId);
-    const account = getAccountById(accId);
-    if (account) {
-      setCurrency(account.currency || 'INR');
+      // Reset form
+      setDescription("");
+      setAmount("");
+      setFromAccountId("");
+      setToAccountId("");
+      setNumber("");
+      setNotes("");
+      setOpen(false);
+    } catch (error) {
+      console.error("Error adding transaction:", error);
     }
   };
+
+  const selectedFromAccount = getAccountById(fromAccountId);
+  const currency = selectedFromAccount?.currency || "INR";
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -102,35 +84,100 @@ export function AddTransactionDialog() {
           <DialogTitle className="font-display text-xl">New Transaction</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-5 mt-4">
-          {/* Transaction Type Toggle */}
-          <div className="flex gap-2 p-1 bg-muted rounded-lg">
-            {transactionTypes.map((t) => (
-              <button
-                key={t.value}
-                type="button"
-                onClick={() => setType(t.value)}
-                className={cn(
-                  "flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all",
-                  type === t.value
-                    ? t.color
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {t.label}
-              </button>
-            ))}
+        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="date">Date</Label>
+              <Input
+                id="date"
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="number">Reference #</Label>
+              <Input
+                id="number"
+                placeholder="Check/Receipt #"
+                value={number}
+                onChange={(e) => setNumber(e.target.value)}
+              />
+            </div>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
             <Input
               id="description"
-              placeholder="Enter description"
+              placeholder="e.g. Monthly Salary, Grocery Shopping"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               required
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="fromAccount">From Account</Label>
+            <Select value={fromAccountId} onValueChange={setFromAccountId} required>
+              <SelectTrigger>
+                <SelectValue placeholder="Source of funds..." />
+              </SelectTrigger>
+              <SelectContent>
+                {["asset", "liability", "income", "expense"].map((type) => {
+                  const accountsOfType = allAccounts.filter(a => a.type === type);
+                  if (accountsOfType.length === 0) return null;
+                  return (
+                    <div key={type}>
+                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase bg-muted/50">
+                        {type}s
+                      </div>
+                      {accountsOfType.map((account) => (
+                        <SelectItem key={account.id} value={account.id}>
+                          {account.name}
+                          {!account.isCategory && ` (${getCurrencySymbol(account.currency || 'INR')})`}
+                        </SelectItem>
+                      ))}
+                    </div>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+            <p className="text-[10px] text-muted-foreground px-1">
+              Select where the money is coming <strong>FROM</strong> (e.g. Salary, Bank)
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="toAccount">To Account</Label>
+            <Select value={toAccountId} onValueChange={setToAccountId} required>
+              <SelectTrigger>
+                <SelectValue placeholder="Destination of funds..." />
+              </SelectTrigger>
+              <SelectContent>
+                {["asset", "liability", "expense", "income"].map((type) => {
+                  const accountsOfType = allAccounts.filter(a => a.type === type);
+                  if (accountsOfType.length === 0) return null;
+                  return (
+                    <div key={type}>
+                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase bg-muted/50">
+                        {type}s
+                      </div>
+                      {accountsOfType.map((account) => (
+                        <SelectItem key={account.id} value={account.id}>
+                          {account.name}
+                          {!account.isCategory && ` (${getCurrencySymbol(account.currency || 'INR')})`}
+                        </SelectItem>
+                      ))}
+                    </div>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+            <p className="text-[10px] text-muted-foreground px-1">
+              Select where the money is going <strong>TO</strong> (e.g. Bank, Groceries)
+            </p>
           </div>
 
           <div className="space-y-2">
@@ -154,81 +201,10 @@ export function AddTransactionDialog() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="currency">Currency</Label>
-            <Select value={currency} onValueChange={(v) => setCurrency(v as Currency)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select currency" />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(SUPPORTED_CURRENCIES).map(([code, info]) => (
-                  <SelectItem key={code} value={code}>
-                    {info.flag} {info.symbol} {info.name} ({code})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="account">
-              {type === "transfer" ? "From Account" : "Account"}
-            </Label>
-            <Select value={accountId} onValueChange={handleAccountChange} required>
-              <SelectTrigger>
-                <SelectValue placeholder="Select account" />
-              </SelectTrigger>
-              <SelectContent>
-                {accounts.map((account) => (
-                  <SelectItem key={account.id} value={account.id}>
-                    {account.name} ({getCurrencySymbol(account.currency || 'INR')})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <AnimatePresence>
-            {type === "transfer" && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="space-y-2"
-              >
-                <Label htmlFor="toAccount">To Account</Label>
-                <Select value={toAccountId} onValueChange={setToAccountId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select destination" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {accounts
-                      .filter((a) => a.id !== accountId)
-                      .map((account) => (
-                        <SelectItem key={account.id} value={account.id}>
-                          {account.name}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <div className="space-y-2">
-            <Label htmlFor="category">Category</Label>
-            <Input
-              id="category"
-              placeholder="e.g., Groceries, Salary"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-            />
-          </div>
-
-          <div className="space-y-2">
             <Label htmlFor="notes">Notes (optional)</Label>
             <Textarea
               id="notes"
-              placeholder="Add any additional notes..."
+              placeholder="Add any additional details..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={2}
@@ -253,3 +229,4 @@ export function AddTransactionDialog() {
     </Dialog>
   );
 }
+

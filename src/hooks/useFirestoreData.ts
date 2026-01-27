@@ -1,170 +1,96 @@
+/**
+ * Firestore Data Hook - Double-Entry Accounting with Multi-Book Support
+ * Completely rewritten for GnuCash-style splits and book scoping
+ */
+
 import { useState, useEffect, useCallback } from "react";
-import {
-  collection,
-  query,
-  where,
-  onSnapshot,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  doc,
-  orderBy,
-  Timestamp,
-  writeBatch,
-} from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
-import { Account, Transaction, Category, AccountType, TransactionType, Split, SplitType, AccountActivity } from "@/lib/firebaseTypes";
+import { useBook } from "@/contexts/BookContext";
+import { Account, Transaction, Split, Category, AccountActivity, SplitType, AccountType } from "@/lib/firebaseTypes";
+import db from "@/lib/database/DatabaseService";
+import {
+  validateSplitsBalance,
+  calculateBalanceChange,
+  getDisplayAmount,
+  inferTransactionType,
+  createSimpleSplits,
+} from "@/lib/accountingUtils";
 import { convertToINR, FALLBACK_EXCHANGE_RATES } from "@/lib/currencyUtils";
+import { toast } from "sonner";
 
 export function useFirestoreData() {
   const { user } = useAuth();
+  const { currentBook } = useBook();
+
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [splits, setSplits] = useState<Split[]>([]);
-  const [accountActivities, setAccountActivities] = useState<AccountActivity[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Subscribe to accounts
+  // Subscribe to accounts for current book
   useEffect(() => {
-    if (!user) {
+    if (!user || !currentBook) {
       setAccounts([]);
       setTransactions([]);
       setCategories([]);
-      setSplits([]);
-      setAccountActivities([]);
       setLoading(false);
       return;
     }
 
     setLoading(true);
 
-    const accountsQuery = query(
-      collection(db, "accounts"),
-      where("userId", "==", user.uid)
-    );
-
-    const unsubscribeAccounts = onSnapshot(accountsQuery, (snapshot) => {
-      const accountsData = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate() || new Date(),
-        updatedAt: doc.data().updatedAt?.toDate() || new Date(),
-      })) as Account[];
-      // Sort client-side to avoid needing composite index
-      accountsData.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    // Subscribe to accounts for current book
+    const unsubAccounts = db.subscribeToAccounts(currentBook.id, (accountsData) => {
       setAccounts(accountsData);
     });
 
-    const transactionsQuery = query(
-      collection(db, "transactions"),
-      where("userId", "==", user.uid)
-    );
+    // Subscribe to transactions  
+    const unsubTransactions = db.subscribeToTransactions(currentBook.id, (transactionsData) => {
+      console.log("Transactions loaded:", transactionsData.length);
+      setTransactions(transactionsData);
+      setLoading(false);
+    });
 
-    const unsubscribeTransactions = onSnapshot(
-      transactionsQuery,
-      (snapshot) => {
-        const transactionsData = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-          date: doc.data().date?.toDate() || new Date(),
-          createdAt: doc.data().createdAt?.toDate() || new Date(),
-          updatedAt: doc.data().updatedAt?.toDate() || new Date(),
-        })) as Transaction[];
-        // Sort client-side to avoid needing composite index
-        transactionsData.sort((a, b) => b.date.getTime() - a.date.getTime());
-        console.log("Transactions loaded:", transactionsData.length, transactionsData);
-        setTransactions(transactionsData);
-      },
-      (error) => {
-        console.error("Error loading transactions:", error);
-      }
-    );
-
-    const categoriesQuery = query(
-      collection(db, "categories"),
-      where("userId", "==", user.uid)
-    );
-
-    const unsubscribeCategories = onSnapshot(
-      categoriesQuery,
-      (snapshot) => {
-        const categoriesData = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as Category[];
-        console.log("Categories loaded:", categoriesData.length);
-        setCategories(categoriesData);
-      },
-      (error) => {
-        console.error("Error loading categories:", error);
-      }
-    );
-
-    // Subscribe to splits
-    const splitsQuery = query(
-      collection(db, "splits"),
-      where("userId", "==", user.uid)
-    );
-
-    const unsubscribeSplits = onSnapshot(
-      splitsQuery,
-      (snapshot) => {
-        const splitsData = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as Split[];
-        console.log("Splits loaded:", splitsData.length);
-        setSplits(splitsData);
-        setLoading(false);
-      },
-      (error) => {
-        console.error("Error loading splits:", error);
-        setLoading(false);
-      }
-    );
-
-    // Subscribe to account activities
-    const activitiesQuery = query(
-      collection(db, "accountActivities"),
-      where("userId", "==", user.uid)
-    );
-
-    const unsubscribeActivities = onSnapshot(
-      activitiesQuery,
-      (snapshot) => {
-        const activitiesData = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-          date: doc.data().date?.toDate() || new Date(),
-          createdAt: doc.data().createdAt?.toDate() || new Date(),
-        })) as AccountActivity[];
-        // Sort by date descending
-        activitiesData.sort((a, b) => b.date.getTime() - a.date.getTime());
-        console.log("Account activities loaded:", activitiesData.length);
-        setAccountActivities(activitiesData);
-      },
-      (error) => {
-        console.error("Error loading account activities:", error);
-      }
-    );
+    // Subscribe to categories and update state
+    db.getBookCategories(currentBook.id).then((categoriesData) => {
+      setCategories(categoriesData);
+    });
 
     return () => {
-      unsubscribeAccounts();
-      unsubscribeTransactions();
-      unsubscribeCategories();
-      unsubscribeSplits();
-      unsubscribeActivities();
+      unsubAccounts();
+      unsubTransactions();
     };
-  }, [user]);
+  }, [user, currentBook]);
+
+  // Combine Accounts and Categories for Unified "All Accounts" View (GnuCash Style)
+  const allAccounts: Account[] = [
+    ...accounts,
+    ...categories.map(cat => ({
+      id: cat.id,
+      userId: cat.userId,
+      name: cat.name,
+      type: cat.type as "income" | "expense", // Map category type to account type
+      balance: 0, // Categories don't hold balance (conceptually infinite/zero in this context)
+      currency: accounts[0]?.currency || "INR", // Default currency
+      color: cat.color,
+      icon: cat.icon,
+      isCategory: true, // Flag to distinguish
+      createdAt: new Date(), // Dummy
+      updatedAt: new Date(), // Dummy
+    } as Account))
+  ];
+
+  // ==================== CALCULATED TOTALS ====================
 
   const getTotalBalance = useCallback(() => {
     return accounts
       .filter((a) => a.type === "asset" || a.type === "liability")
       .reduce((sum, account) => {
-        // Convert account balance to INR
-        const balanceInINR = convertToINR(account.balance, account.currency || 'INR', FALLBACK_EXCHANGE_RATES);
+        const balanceInINR = convertToINR(
+          account.balance,
+          account.currency || "INR",
+          FALLBACK_EXCHANGE_RATES
+        );
 
         if (account.type === "liability") {
           return sum - balanceInINR;
@@ -174,59 +100,37 @@ export function useFirestoreData() {
   }, [accounts]);
 
   const getTotalIncome = useCallback(() => {
-    // Income from transactions
-    const incomeTransactions = transactions.filter((t) => t.type === "income");
-    const transactionIncome = incomeTransactions.reduce((sum, t) => {
-      const amountInINR = convertToINR(t.amount, t.currency || 'INR', FALLBACK_EXCHANGE_RATES);
-      return sum + amountInINR;
-    }, 0);
+    // In double-entry, income is determined by splits involving income accounts
+    let total = 0;
 
-    // Income from account balance increases
-    const balanceIncreases = accountActivities
-      .filter((a) => a.changes.balance && a.changes.balance.new > a.changes.balance.old)
-      .reduce((sum, a) => {
-        if (a.changes.balance) {
-          const increase = a.changes.balance.new - a.changes.balance.old;
-          // Get the currency from the activity (new currency if changed, or find the account)
-          const currency = a.changes.currency?.new || 'INR';
-          const increaseInINR = convertToINR(increase, currency, FALLBACK_EXCHANGE_RATES);
-          return sum + increaseInINR;
-        }
-        return sum;
-      }, 0);
+    transactions.forEach((transaction) => {
+      const incomeSplits = transaction.splits.filter((s) => s.accountType === "income");
+      incomeSplits.forEach((split) => {
+        // Income accounts increase with credits (negative values in our system)
+        // So we negate to get the positive income amount
+        total += Math.abs(split.value);
+      });
+    });
 
-    const total = transactionIncome + balanceIncreases;
-    console.log("Total Income:", total, "from", incomeTransactions.length, "transactions +", balanceIncreases.toFixed(2), "from balance increases");
     return total;
-  }, [transactions, accountActivities]);
+  }, [transactions]);
 
   const getTotalExpenses = useCallback(() => {
-    // Expenses from transactions
-    const expenseTransactions = transactions.filter((t) => t.type === "expense");
-    const transactionExpenses = expenseTransactions.reduce((sum, t) => {
-      const amountInINR = convertToINR(t.amount, t.currency || 'INR', FALLBACK_EXCHANGE_RATES);
-      return sum + amountInINR;
-    }, 0);
+    // In double-entry, expenses are determined by splits involving expense accounts
+    let total = 0;
 
-    // Expenses from account balance decreases
-    const balanceDecreases = accountActivities
-      .filter((a) => a.changes.balance && a.changes.balance.new < a.changes.balance.old)
-      .reduce((sum, a) => {
-        if (a.changes.balance) {
-          const decrease = a.changes.balance.old - a.changes.balance.new;
-          // Get the currency from the activity (old currency if changed)
-          const currency = a.changes.currency?.old || 'INR';
-          const decreaseInINR = convertToINR(decrease, currency, FALLBACK_EXCHANGE_RATES);
-          return sum + decreaseInINR;
-        }
-        return sum;
-      }, 0);
+    transactions.forEach((transaction) => {
+      const expenseSplits = transaction.splits.filter((s) => s.accountType === "expense");
+      expenseSplits.forEach((split) => {
+        // Expense accounts increase with debits (positive values)
+        total += Math.abs(split.value);
+      });
+    });
 
-    const total = transactionExpenses + balanceDecreases;
-    console.log("Total Expenses:", total, "from", expenseTransactions.length, "transactions +", balanceDecreases.toFixed(2), "from balance decreases");
-    console.log("All transactions:", transactions.map(t => ({ id: t.id, type: t.type, amount: t.amount })));
     return total;
-  }, [transactions, accountActivities]);
+  }, [transactions]);
+
+  // ==================== ACCOUNT OPERATIONS ====================
 
   const getAccountById = useCallback(
     (id: string) => accounts.find((a) => a.id === id),
@@ -235,214 +139,413 @@ export function useFirestoreData() {
 
   const addAccount = useCallback(
     async (account: Omit<Account, "id" | "userId" | "createdAt" | "updatedAt">) => {
-      if (!user) return;
+      if (!user || !currentBook) {
+        toast.error("Please log in and select a book");
+        return;
+      }
 
-      await addDoc(collection(db, "accounts"), {
-        ...account,
+      const newAccount: Account = {
+        id: `acc-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         userId: user.uid,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
-      });
+        ...account,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      try {
+        await db.createAccount(currentBook.id, newAccount);
+        toast.success("Account created successfully");
+      } catch (error) {
+        console.error("Error creating account:", error);
+        toast.error("Failed to create account");
+        throw error;
+      }
     },
-    [user]
+    [user, currentBook]
   );
 
   const updateAccount = useCallback(
     async (id: string, updates: Partial<Account>) => {
-      if (!user) return;
+      if (!user || !currentBook) return;
 
-      // Get the current account to track changes
-      const oldAccount = accounts.find((a) => a.id === id);
-
-      // Update the account
-      await updateDoc(doc(db, "accounts", id), {
-        ...updates,
-        updatedAt: Timestamp.now(),
-      });
-
-      // Log activity if balance or currency changed
-      if (oldAccount && (updates.balance !== undefined || updates.currency !== undefined || updates.name !== undefined)) {
-        const changes: AccountActivity['changes'] = {};
-
-        if (updates.balance !== undefined && updates.balance !== oldAccount.balance) {
-          changes.balance = { old: oldAccount.balance, new: updates.balance };
-        }
-
-        if (updates.currency !== undefined && updates.currency !== oldAccount.currency) {
-          changes.currency = { old: oldAccount.currency, new: updates.currency };
-        }
-
-        if (updates.name !== undefined && updates.name !== oldAccount.name) {
-          changes.name = { old: oldAccount.name, new: updates.name };
-        }
-
-        // Only create activity if there are actual changes
-        if (Object.keys(changes).length > 0) {
-          await addDoc(collection(db, "accountActivities"), {
-            userId: user.uid,
-            accountId: id,
-            accountName: updates.name || oldAccount.name,
-            type: changes.balance ? 'balance_update' : changes.currency ? 'currency_update' : 'account_update',
-            changes,
-            date: Timestamp.now(),
-            createdAt: Timestamp.now(),
-          });
-        }
+      try {
+        await db.updateAccount(currentBook.id, id, {
+          ...updates,
+          updatedAt: new Date(),
+        });
+        toast.success("Account updated");
+      } catch (error) {
+        console.error("Error updating account:", error);
+        toast.error("Failed to update account");
+        throw error;
       }
     },
-    [user, accounts]
+    [user, currentBook]
   );
 
-  const deleteAccount = useCallback(async (id: string) => {
-    const batch = writeBatch(db);
+  const deleteAccount = useCallback(
+    async (id: string) => {
+      if (!currentBook) return;
 
-    // Delete the account
-    batch.delete(doc(db, "accounts", id));
+      // Check for related transactions
+      const relatedTransactions = transactions.filter((t) =>
+        t.splits.some((s) => s.accountId === id)
+      );
 
-    // Delete related transactions
-    const relatedTransactions = transactions.filter(
-      (t) => t.accountId === id || t.toAccountId === id
-    );
-    relatedTransactions.forEach((t) => {
-      batch.delete(doc(db, "transactions", t.id));
-    });
+      if (relatedTransactions.length > 0) {
+        toast.error(
+          `Cannot delete account with ${relatedTransactions.length} transactions. Delete transactions first.`
+        );
+        return;
+      }
 
-    await batch.commit();
-  }, [transactions]);
+      try {
+        await db.deleteAccount(currentBook.id, id);
+        toast.success("Account deleted");
+      } catch (error) {
+        console.error("Error deleting account:", error);
+        toast.error("Failed to delete account");
+        throw error;
+      }
+    },
+    [currentBook, transactions]
+  );
 
+  // ==================== TRANSACTION OPERATIONS ====================
+
+  /**
+   * Add a simple two-account transaction
+   * This creates the proper splits automatically
+   */
   const addTransaction = useCallback(
-    async (transaction: Omit<Transaction, "id" | "userId" | "createdAt" | "updatedAt">) => {
-      if (!user) return;
-
-      const batch = writeBatch(db);
-
-      // Add transaction - filter out undefined values
-      const transactionRef = doc(collection(db, "transactions"));
-      const transactionData: any = {
-        userId: user.uid,
-        description: transaction.description,
-        amount: transaction.amount,
-        currency: transaction.currency || 'INR',
-        type: transaction.type,
-        category: transaction.category,
-        accountId: transaction.accountId,
-        isSplit: false, // Simple transaction
-        date: Timestamp.fromDate(transaction.date instanceof Date ? transaction.date : new Date(transaction.date)),
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
-      };
-
-      // Only add optional fields if they have values
-      if (transaction.notes) {
-        transactionData.notes = transaction.notes;
-      }
-      if (transaction.toAccountId) {
-        transactionData.toAccountId = transaction.toAccountId;
+    async (params: {
+      description: string;
+      amount: number;
+      fromAccountId: string;
+      toAccountId: string;
+      date: Date;
+      number?: string;
+      notes?: string;
+    }) => {
+      if (!user || !currentBook) {
+        toast.error("Please log in and select a book");
+        return;
       }
 
-      batch.set(transactionRef, transactionData);
+      const { description, amount, fromAccountId, toAccountId, date, number, notes } = params;
 
-      // Update account balance
-      const account = accounts.find((a) => a.id === transaction.accountId);
-      if (account) {
-        const balanceChange =
-          transaction.type === "income"
-            ? transaction.amount
-            : transaction.type === "expense"
-              ? -transaction.amount
-              : -transaction.amount;
-
-        batch.update(doc(db, "accounts", account.id), {
-          balance: account.balance + balanceChange,
-          updatedAt: Timestamp.now(),
-        });
-      }
-
-      // For transfers, update destination account
-      if (transaction.type === "transfer" && transaction.toAccountId) {
-        const toAccount = accounts.find((a) => a.id === transaction.toAccountId);
-        if (toAccount) {
-          batch.update(doc(db, "accounts", toAccount.id), {
-            balance: toAccount.balance + transaction.amount,
-            updatedAt: Timestamp.now(),
-          });
+      // Get account details for split creation
+      // Check both accounts (assets/liabilities) and categories (income/expenses)
+      let fromAccount = accounts.find((a) => a.id === fromAccountId);
+      if (!fromAccount) {
+        const cat = categories.find(c => c.id === fromAccountId);
+        if (cat) {
+          fromAccount = {
+            id: cat.id,
+            userId: cat.userId,
+            name: cat.name,
+            type: cat.type as AccountType,
+            balance: 0,
+            currency: accounts[0]?.currency || "INR",
+            color: cat.color,
+            icon: cat.icon,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            path: cat.name // Use name as path for categories
+          } as Account;
         }
       }
 
-      await batch.commit();
+      let toAccount = accounts.find((a) => a.id === toAccountId);
+      if (!toAccount) {
+        const cat = categories.find(c => c.id === toAccountId);
+        if (cat) {
+          toAccount = {
+            id: cat.id,
+            userId: cat.userId,
+            name: cat.name,
+            type: cat.type as AccountType,
+            balance: 0,
+            currency: accounts[0]?.currency || "INR",
+            color: cat.color,
+            icon: cat.icon,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            path: cat.name // Use name as path for categories
+          } as Account;
+        }
+      }
+
+      if (!fromAccount || !toAccount) {
+        toast.error("Invalid accounts/categories selected");
+        return;
+      }
+
+      // Create transaction ID
+      const transactionId = `txn-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+      // Create splits (from account decreases, to account increases)
+      const splits = createSimpleSplits(
+        transactionId,
+        {
+          id: fromAccount.id,
+          path: fromAccount.path || fromAccount.name,
+          type: fromAccount.type,
+        },
+        {
+          id: toAccount.id,
+          path: toAccount.path || toAccount.name,
+          type: toAccount.type,
+        },
+        amount
+      );
+
+      // Validate splits balance
+      if (!validateSplitsBalance(splits)) {
+        toast.error("Transaction splits don't balance");
+        return;
+      }
+
+      // Create transaction
+      const newTransaction: Transaction = {
+        id: transactionId,
+        userId: user.uid,
+        description,
+        date,
+        number,
+        notes,
+        splits,
+        currency: fromAccount.currency,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      try {
+        // Save transaction
+        await db.createTransaction(currentBook.id, newTransaction);
+
+        // Update account balances (ONLY for Asset/Liability accounts)
+        // Income/Expense categories don't store balance in the accounts collection
+        if (fromAccount.type === 'asset' || fromAccount.type === 'liability') {
+          const fromBalanceChange = calculateBalanceChange(fromAccount.type, splits[0].value);
+          await db.updateAccount(currentBook.id, fromAccount.id, {
+            balance: fromAccount.balance + fromBalanceChange,
+            updatedAt: new Date(),
+          });
+        }
+
+        if (toAccount.type === 'asset' || toAccount.type === 'liability') {
+          const toBalanceChange = calculateBalanceChange(toAccount.type, splits[1].value);
+          await db.updateAccount(currentBook.id, toAccount.id, {
+            balance: toAccount.balance + toBalanceChange,
+            updatedAt: new Date(),
+          });
+        }
+
+        toast.success("Transaction added");
+      } catch (error) {
+        console.error("Error adding transaction:", error);
+        toast.error("Failed to add transaction");
+        throw error;
+      }
     },
-    [user, accounts]
+    [user, currentBook, accounts]
   );
 
   const updateTransaction = useCallback(
     async (id: string, updates: Partial<Transaction>) => {
-      await updateDoc(doc(db, "transactions", id), {
-        ...updates,
-        updatedAt: Timestamp.now(),
-      });
+      if (!currentBook) return;
+
+      try {
+        await db.updateTransaction(currentBook.id, id, {
+          ...updates,
+          updatedAt: new Date(),
+        });
+        toast.success("Transaction updated");
+      } catch (error) {
+        console.error("Error updating transaction:", error);
+        toast.error("Failed to update transaction");
+        throw error;
+      }
     },
-    []
+    [currentBook]
   );
 
   const deleteTransaction = useCallback(
     async (id: string) => {
+      if (!currentBook) return;
+
       const transaction = transactions.find((t) => t.id === id);
       if (!transaction) return;
 
-      const batch = writeBatch(db);
-
-      // Delete transaction
-      batch.delete(doc(db, "transactions", id));
-
-      // Reverse account balance
-      const account = accounts.find((a) => a.id === transaction.accountId);
-      if (account) {
-        const balanceChange =
-          transaction.type === "income"
-            ? -transaction.amount
-            : transaction.type === "expense"
-              ? transaction.amount
-              : transaction.amount;
-
-        batch.update(doc(db, "accounts", account.id), {
-          balance: account.balance + balanceChange,
-          updatedAt: Timestamp.now(),
-        });
-      }
-
-      // For transfers, reverse destination account
-      if (transaction.type === "transfer" && transaction.toAccountId) {
-        const toAccount = accounts.find((a) => a.id === transaction.toAccountId);
-        if (toAccount) {
-          batch.update(doc(db, "accounts", toAccount.id), {
-            balance: toAccount.balance - transaction.amount,
-            updatedAt: Timestamp.now(),
-          });
+      try {
+        // Reverse account balance changes
+        for (const split of transaction.splits) {
+          const account = accounts.find((a) => a.id === split.accountId);
+          if (account) {
+            const balanceChange = calculateBalanceChange(account.type, split.value);
+            await db.updateAccount(currentBook.id, account.id, {
+              balance: account.balance - balanceChange,
+              updatedAt: new Date(),
+            });
+          }
         }
+
+        // Delete transaction
+        await db.deleteTransaction(currentBook.id, id);
+        toast.success("Transaction deleted");
+      } catch (error) {
+        console.error("Error deleting transaction:", error);
+        toast.error("Failed to delete transaction");
+        throw error;
+      }
+    },
+    [currentBook, transactions, accounts]
+  );
+
+  /**
+   * Add a transaction with multiple splits (complex transaction)
+   */
+  const addSplitTransaction = useCallback(
+    async (
+      transactionData: Omit<Transaction, "id" | "userId" | "createdAt" | "updatedAt" | "splits">,
+      splitDefinitions: {
+        accountId: string;
+        accountName: string;
+        amount: number;
+        type: SplitType;
+        memo?: string;
+      }[]
+    ) => {
+      if (!user || !currentBook) {
+        toast.error("Please log in and select a book");
+        return;
       }
 
-      await batch.commit();
+      // Create transaction ID
+      const transactionId = `txn-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+      // Create splits
+      const splits: Split[] = splitDefinitions.map((def, index) => {
+        const account = accounts.find((a) => a.id === def.accountId);
+        if (!account) {
+          throw new Error(`Account not found: ${def.accountId}`);
+        }
+
+        return {
+          id: `${transactionId}-split-${index + 1}`,
+          transactionId,
+          accountId: def.accountId,
+          accountPath: account.path || account.name,
+          accountType: account.type,
+          value: def.type === "debit" ? Math.abs(def.amount) : -Math.abs(def.amount),
+          memo: def.memo,
+        };
+      });
+
+      // Validate splits balance
+      if (!validateSplitsBalance(splits)) {
+        toast.error("Transaction splits don't balance");
+        throw new Error("Transaction splits don't balance");
+      }
+
+      // Create transaction
+      const newTransaction: Transaction = {
+        id: transactionId,
+        userId: user.uid,
+        ...transactionData,
+        splits,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      try {
+        // Save transaction
+        await db.createTransaction(currentBook.id, newTransaction);
+
+        // Update account balances for ALL splits
+        for (const split of splits) {
+          const account = accounts.find((a) => a.id === split.accountId);
+          if (account) {
+            const balanceChange = calculateBalanceChange(account.type, split.value);
+            await db.updateAccount(currentBook.id, account.id, {
+              balance: account.balance + balanceChange,
+              updatedAt: new Date(),
+            });
+          }
+        }
+
+        toast.success("Transaction added");
+      } catch (error) {
+        console.error("Error adding transaction:", error);
+        toast.error("Failed to add transaction");
+        throw error;
+      }
     },
-    [transactions, accounts]
+    [user, currentBook, accounts]
   );
+
+  // ==================== CATEGORY OPERATIONS ====================
 
   const addCategory = useCallback(
     async (category: Omit<Category, "id" | "userId">) => {
-      if (!user) return;
+      if (!user || !currentBook) return;
 
-      await addDoc(collection(db, "categories"), {
-        ...category,
+      const newCategory: Category = {
+        id: `cat-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         userId: user.uid,
-      });
+        ...category,
+      };
+
+      try {
+        await db.createCategory(currentBook.id, newCategory);
+        toast.success("Category created");
+        return newCategory.id;
+      } catch (error) {
+        console.error("Error creating category:", error);
+        toast.error("Failed to create category");
+        throw error;
+      }
     },
-    [user]
+    [user, currentBook]
   );
 
-  const deleteCategory = useCallback(async (id: string) => {
-    await deleteDoc(doc(db, "categories", id));
-  }, []);
+  const updateCategory = useCallback(
+    async (id: string, updates: Partial<Category>) => {
+      if (!currentBook) return;
 
-  // Get monthly data for charts
+      try {
+        await db.updateCategory(currentBook.id, id, {
+          ...updates,
+        });
+        toast.success("Category updated");
+      } catch (error) {
+        console.error("Error updating category:", error);
+        toast.error("Failed to update category");
+        throw error;
+      }
+    },
+    [currentBook]
+  );
+
+  const deleteCategory = useCallback(
+    async (id: string) => {
+      if (!currentBook) return;
+
+      try {
+        await db.deleteCategory(currentBook.id, id);
+        toast.success("Category deleted");
+      } catch (error) {
+        console.error("Error deleting category:", error);
+        toast.error("Failed to delete category");
+        throw error;
+      }
+    },
+    [currentBook]
+  );
+
+  // ==================== HELPER FUNCTIONS ====================
+
   const getMonthlyData = useCallback(() => {
     const monthlyData: { month: string; income: number; expenses: number }[] = [];
     const last6Months: Date[] = [];
@@ -463,13 +566,18 @@ export function useFirestoreData() {
         return tDate.getMonth() === monthNum && tDate.getFullYear() === year;
       });
 
-      const income = monthTransactions
-        .filter((t) => t.type === "income")
-        .reduce((sum, t) => sum + t.amount, 0);
+      let income = 0;
+      let expenses = 0;
 
-      const expenses = monthTransactions
-        .filter((t) => t.type === "expense")
-        .reduce((sum, t) => sum + t.amount, 0);
+      monthTransactions.forEach((t) => {
+        t.splits.forEach((split) => {
+          if (split.accountType === "income") {
+            income += Math.abs(split.value);
+          } else if (split.accountType === "expense") {
+            expenses += Math.abs(split.value);
+          }
+        });
+      });
 
       monthlyData.push({ month, income, expenses });
     });
@@ -477,16 +585,18 @@ export function useFirestoreData() {
     return monthlyData;
   }, [transactions]);
 
-  // Get category spending data
   const getCategorySpending = useCallback(() => {
     const categoryTotals: { [key: string]: number } = {};
 
-    transactions
-      .filter((t) => t.type === "expense")
-      .forEach((t) => {
-        const category = t.category || "Uncategorized";
-        categoryTotals[category] = (categoryTotals[category] || 0) + t.amount;
+    transactions.forEach((t) => {
+      t.splits.forEach((split) => {
+        if (split.accountType === "expense") {
+          // Use account path as category
+          const category = split.accountPath.split(":")[0] || "Uncategorized";
+          categoryTotals[category] = (categoryTotals[category] || 0) + Math.abs(split.value);
+        }
       });
+    });
 
     const colors = [
       "hsl(var(--chart-1))",
@@ -503,132 +613,6 @@ export function useFirestoreData() {
     }));
   }, [transactions]);
 
-  // Get splits for a transaction
-  const getSplitsByTransactionId = useCallback(
-    (transactionId: string) => {
-      return splits.filter((s) => s.transactionId === transactionId);
-    },
-    [splits]
-  );
-
-  // Helper function to calculate account balance change based on double-entry rules
-  const calculateBalanceChange = (accountType: AccountType, splitType: SplitType, amount: number): number => {
-    // Asset and Expense accounts: Debit increases, Credit decreases
-    // Liability and Income accounts: Credit increases, Debit decreases
-    if (accountType === "asset" || accountType === "expense") {
-      return splitType === "debit" ? amount : -amount;
-    } else {
-      return splitType === "credit" ? amount : -amount;
-    }
-  };
-
-  // Add split transaction with double-entry bookkeeping
-  const addSplitTransaction = useCallback(
-    async (
-      transaction: Omit<Transaction, "id" | "userId" | "createdAt" | "updatedAt" | "isSplit">,
-      splitEntries: Omit<Split, "id" | "transactionId">[]
-    ) => {
-      if (!user) return;
-
-      // Validate splits balance
-      const totalDebits = splitEntries
-        .filter((s) => s.type === "debit")
-        .reduce((sum, s) => sum + s.amount, 0);
-      const totalCredits = splitEntries
-        .filter((s) => s.type === "credit")
-        .reduce((sum, s) => sum + s.amount, 0);
-
-      if (Math.abs(totalDebits - totalCredits) > 0.01) {
-        throw new Error(
-          `Splits must balance: debits ($${totalDebits.toFixed(2)}) must equal credits ($${totalCredits.toFixed(2)})`
-        );
-      }
-
-      const batch = writeBatch(db);
-
-      // Add transaction - filter out undefined values
-      const transactionRef = doc(collection(db, "transactions"));
-      const transactionData: any = {
-        userId: user.uid,
-        description: transaction.description,
-        amount: transaction.amount,
-        currency: transaction.currency || 'INR',
-        type: transaction.type,
-        category: transaction.category,
-        accountId: transaction.accountId,
-        isSplit: true,
-        date: Timestamp.fromDate(transaction.date instanceof Date ? transaction.date : new Date(transaction.date)),
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
-      };
-
-      // Only add optional fields if they have values
-      if (transaction.notes) {
-        transactionData.notes = transaction.notes;
-      }
-      if (transaction.toAccountId) {
-        transactionData.toAccountId = transaction.toAccountId;
-      }
-
-      batch.set(transactionRef, transactionData);
-
-      // Add splits and update account balances
-      for (const splitEntry of splitEntries) {
-        const splitRef = doc(collection(db, "splits"));
-        batch.set(splitRef, {
-          ...splitEntry,
-          transactionId: transactionRef.id,
-          userId: user.uid,
-        });
-
-        // Update account balance based on double-entry rules
-        const account = accounts.find((a) => a.id === splitEntry.accountId);
-        if (account) {
-          const balanceChange = calculateBalanceChange(account.type, splitEntry.type, splitEntry.amount);
-          batch.update(doc(db, "accounts", account.id), {
-            balance: account.balance + balanceChange,
-            updatedAt: Timestamp.now(),
-          });
-        }
-      }
-
-      await batch.commit();
-    },
-    [user, accounts]
-  );
-
-  // Delete split transaction and reverse balance changes
-  const deleteSplitTransaction = useCallback(
-    async (transactionId: string) => {
-      const transactionSplits = splits.filter((s) => s.transactionId === transactionId);
-      if (transactionSplits.length === 0) return;
-
-      const batch = writeBatch(db);
-
-      // Delete transaction
-      batch.delete(doc(db, "transactions", transactionId));
-
-      // Delete splits and reverse account balances
-      for (const split of transactionSplits) {
-        batch.delete(doc(db, "splits", split.id));
-
-        const account = accounts.find((a) => a.id === split.accountId);
-        if (account) {
-          // Reverse the balance change
-          const balanceChange = calculateBalanceChange(account.type, split.type, split.amount);
-          batch.update(doc(db, "accounts", account.id), {
-            balance: account.balance - balanceChange,
-            updatedAt: Timestamp.now(),
-          });
-        }
-      }
-
-      await batch.commit();
-    },
-    [splits, accounts]
-  );
-
-  // Helper functions for transaction forms
   const getAssetAccounts = useCallback(() => {
     return accounts.filter((a) => a.type === "asset");
   }, [accounts]);
@@ -641,30 +625,19 @@ export function useFirestoreData() {
     return categories.filter((c) => c.type === "expense");
   }, [categories]);
 
-  // Get recent activities and transactions combined
-  const getRecentActivities = useCallback((limit: number = 10) => {
-    // Combine transactions and account activities
-    const combined: Array<(Transaction & { itemType: 'transaction' }) | (AccountActivity & { itemType: 'activity' })> = [
-      ...transactions.map(t => ({ ...t, itemType: 'transaction' as const })),
-      ...accountActivities.map(a => ({ ...a, itemType: 'activity' as const }))
-    ];
-
-    // Sort by date descending
-    combined.sort((a, b) => {
-      const dateA = a.itemType === 'transaction' ? a.date : a.createdAt;
-      const dateB = b.itemType === 'transaction' ? b.date : b.createdAt;
-      return dateB.getTime() - dateA.getTime();
-    });
-
-    return combined.slice(0, limit);
-  }, [transactions, accountActivities]);
+  const getRecentActivities = useCallback(
+    (limit: number = 10): Array<(Transaction & { itemType: "transaction" }) | (AccountActivity & { itemType: "activity" })> => {
+      // For now, just recent transactions
+      // TODO: Add account activities when we implement them
+      return transactions.slice(0, limit).map((t) => ({ ...t, itemType: "transaction" as const }));
+    },
+    [transactions]
+  );
 
   return {
     accounts,
     transactions,
     categories,
-    splits,
-    accountActivities,
     loading,
     getTotalBalance,
     getTotalIncome,
@@ -676,16 +649,154 @@ export function useFirestoreData() {
     addTransaction,
     updateTransaction,
     deleteTransaction,
+    addSplitTransaction,
     addCategory,
     deleteCategory,
     getMonthlyData,
     getCategorySpending,
-    getSplitsByTransactionId,
-    addSplitTransaction,
-    deleteSplitTransaction,
     getAssetAccounts,
     getIncomeCategories,
     getExpenseCategories,
     getRecentActivities,
+    allAccounts, // Export unified list
+  };
+  // ==================== BUDGET OPERATIONS ====================
+
+  const [budgets, setBudgets] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!user || !currentBook) {
+      setBudgets([]);
+      return;
+    }
+
+    const unsubBudgets = db.subscribeToBudgets(currentBook.id, (budgetsData: any[]) => {
+      setBudgets(budgetsData);
+    });
+
+    return () => {
+      unsubBudgets();
+    };
+  }, [user, currentBook]);
+
+  const addBudget = useCallback(
+    async (budget: any) => {
+      if (!user || !currentBook) return;
+
+      const newBudget = {
+        id: `budget-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        userId: user.uid,
+        bookId: currentBook.id,
+        ...budget,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      try {
+        await db.createBudget(currentBook.id, newBudget);
+        toast.success("Budget set successfully");
+      } catch (error) {
+        console.error("Error creating budget:", error);
+        toast.error("Failed to set budget");
+        throw error;
+      }
+    },
+    [user, currentBook]
+  );
+
+  const updateBudget = useCallback(
+    async (id: string, updates: any) => {
+      if (!currentBook) return;
+
+      try {
+        await db.updateBudget(currentBook.id, id, {
+          ...updates,
+          updatedAt: new Date(),
+        });
+        toast.success("Budget updated");
+      } catch (error) {
+        console.error("Error updating budget:", error);
+        toast.error("Failed to update budget");
+        throw error;
+      }
+    },
+    [currentBook]
+  );
+
+  const deleteBudget = useCallback(
+    async (id: string) => {
+      if (!currentBook) return;
+
+      try {
+        await db.deleteBudget(currentBook.id, id);
+        toast.success("Budget deleted");
+      } catch (error) {
+        console.error("Error deleting budget:", error);
+        toast.error("Failed to delete budget");
+        throw error;
+      }
+    },
+    [currentBook]
+  );
+
+  const getBudgetProgress = useCallback(
+    (categoryId: string, amount: number) => {
+      // Calculate total expenses for this category in the current month
+      const currentMonth = new Date().getMonth();
+      const currentYear = new Date().getFullYear();
+
+      const spent = transactions
+        .filter((t) => {
+          const tDate = t.date instanceof Date ? t.date : new Date(t.date);
+          return tDate.getMonth() === currentMonth && tDate.getFullYear() === currentYear;
+        })
+        .reduce((total, t) => {
+          const categorySplits = t.splits.filter((s) => {
+            // Check if split matches category ID directly or path
+            // For now, let's assume categoryId is the account ID or we check account path prefix
+            return s.accountType === "expense" && (s.accountId === categoryId || s.accountPath.startsWith(categories.find(c => c.id === categoryId)?.name || ""));
+          });
+
+          return total + categorySplits.reduce((sum, s) => sum + Math.abs(s.value), 0);
+        }, 0);
+
+      const percentage = Math.min((spent / amount) * 100, 100);
+      return { spent, remaining: amount - spent, percentage };
+    },
+    [transactions, categories]
+  );
+
+  return {
+    accounts,
+    transactions,
+    categories,
+    budgets,
+    loading,
+    getTotalBalance,
+    getTotalIncome,
+    getTotalExpenses,
+    getAccountById,
+    addAccount,
+    updateAccount,
+    deleteAccount,
+    addTransaction,
+    updateTransaction,
+    deleteTransaction,
+    addSplitTransaction,
+    addCategory,
+    updateCategory,
+    deleteCategory,
+    addBudget,
+    updateBudget,
+    deleteBudget,
+    getBudgetProgress,
+    getMonthlyData,
+    getCategorySpending,
+    getAssetAccounts,
+    getIncomeCategories,
+    getExpenseCategories,
+    getRecentActivities,
+    allAccounts, // Export unified list
   };
 }
+

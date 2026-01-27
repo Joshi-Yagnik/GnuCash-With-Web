@@ -1,9 +1,9 @@
-import { ReactNode } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Button } from "@/components/ui/button";
-import { Menu, Bell, Search, User } from "lucide-react";
+import { Menu, Bell, Search, User, Command } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
@@ -13,40 +13,21 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-// import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { getUserInitials, getDisplayName } from "@/lib/utils";
+import { GlobalSearch } from "@/components/GlobalSearch";
 
 interface AppLayoutProps {
   children: ReactNode;
 }
 
-
-// // Helper function to get user initials
-// const getUserInitials = (name?: string | null, email?: string | null): string => {
-//   if (name) {
-//     const parts = name.trim().split(/\s+/);
-//     if (parts.length >= 2) {
-//       return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-//     }
-//     return name.substring(0, 2).toUpperCase();
-//   }
-//   if (email) {
-//     return email.substring(0, 2).toUpperCase();
-//   }
-//   return "U";
-// };
-
-// // Helper function to get display name
-// const getDisplayName = (user: any): string => {
-//   return user?.displayName || user?.email?.split('@')[0] || "User";
-// };
 export function AppLayout({ children }: AppLayoutProps) {
   const { user, logout } = useAuth();
   const { profile } = useUserProfile();
   const navigate = useNavigate();
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const displayName = profile?.displayName || getDisplayName(user);
   const userEmail = user?.email || "";
@@ -57,6 +38,20 @@ export function AppLayout({ children }: AppLayoutProps) {
     await logout();
     navigate("/auth");
   };
+
+  // Global keyboard shortcut for search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
@@ -69,14 +64,33 @@ export function AppLayout({ children }: AppLayoutProps) {
 
               {/* Search Bar */}
               <div className="flex-1 max-w-md hidden md:block">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search transactions, accounts..."
-                    className="pl-10 bg-muted/50 border-0 focus-visible:ring-1"
-                  />
-                </div>
+                <button
+                  onClick={() => setSearchOpen(true)}
+                  className="w-full text-left"
+                >
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search... (Ctrl+K)"
+                      className="pl-10 pr-16 bg-muted/50 border-0 focus-visible:ring-1 cursor-pointer"
+                      readOnly
+                    />
+                    <kbd className="absolute right-3 top-1/2 -translate-y-1/2 px-1.5 py-0.5 text-xs bg-background border rounded">
+                      <Command className="w-3 h-3 inline mr-0.5" />K
+                    </kbd>
+                  </div>
+                </button>
               </div>
+
+              {/* Mobile Search Button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="md:hidden text-muted-foreground hover:text-foreground"
+                onClick={() => setSearchOpen(true)}
+              >
+                <Search className="w-5 h-5" />
+              </Button>
 
               <div className="flex-1 md:hidden" />
 
@@ -118,7 +132,9 @@ export function AppLayout({ children }: AppLayoutProps) {
                     <DropdownMenuItem onClick={() => navigate("/profile")} className="cursor-pointer">
                       Profile
                     </DropdownMenuItem>
-                    <DropdownMenuItem>Settings</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/settings")} className="cursor-pointer">
+                      Settings
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       className="text-destructive cursor-pointer"
@@ -138,6 +154,9 @@ export function AppLayout({ children }: AppLayoutProps) {
           </main>
         </SidebarInset>
       </div>
+
+      {/* Global Search */}
+      <GlobalSearch open={searchOpen} onOpenChange={setSearchOpen} />
     </SidebarProvider>
   );
 }

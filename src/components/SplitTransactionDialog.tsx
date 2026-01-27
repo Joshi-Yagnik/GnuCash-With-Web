@@ -99,12 +99,10 @@ export function SplitTransactionDialog() {
             await addSplitTransaction(
                 {
                     description,
-                    amount: debits, // Total transaction amount
-                    type: "expense", // Default type for split transactions
-                    category: category || "Split Transaction",
-                    accountId: validSplits[0].accountId, // Primary account
+                    // amount, type, category, accountId are not part of Transaction interface (GnuCash style)
+                    // The splits define the amounts and accounts/categories
                     date: new Date(),
-                    notes: notes || undefined,
+                    notes: (notes || "") + (category ? `\nCategory: ${category}` : "") || undefined,
                 },
                 validSplits.map((s) => ({
                     accountId: s.accountId,

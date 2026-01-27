@@ -2,20 +2,13 @@ import { User } from "firebase/auth";
 import {
     doc,
     getDoc,
-    writeBatch,
-    collection,
+    setDoc,
     serverTimestamp,
-    Timestamp,
 } from "firebase/firestore";
 import { db } from "./firebase";
-import {
-    DEFAULT_ACCOUNTS,
-    DEFAULT_INCOME_CATEGORIES,
-    DEFAULT_EXPENSE_CATEGORIES,
-} from "./defaultData";
 
 /**
- * Check if a user has been initialized with profile and default data
+ * Check if a user has been initialized with profile
  */
 export async function isUserInitialized(userId: string): Promise<boolean> {
     const profileRef = doc(db, "users", userId);
@@ -30,14 +23,14 @@ export async function isUserInitialized(userId: string): Promise<boolean> {
 }
 
 /**
- * Initialize a new user with profile and default data
- * Creates:
- * - User profile document
- * - Default asset accounts (Cash, Bank, Savings)
- * - Default income categories
- * - Default expense categories
- *
- * Uses batch writes for atomicity (all-or-nothing)
+ * Initialize a new user with profile document
+ * 
+ * NOTE: This function ONLY creates the user profile.
+ * Default accounts and categories are created by BookContext
+ * when the default book is initialized.
+ * 
+ * @param user - Firebase Auth user object
+ * @param displayName - Optional display name override
  */
 export async function initializeNewUser(
     user: User,
@@ -46,57 +39,26 @@ export async function initializeNewUser(
     // Check if already initialized to prevent duplicates
     const initialized = await isUserInitialized(user.uid);
     if (initialized) {
-        console.log("User already initialized, skipping...");
+        console.log("User already initialized, skipping profile creation...");
         return;
     }
 
-    const batch = writeBatch(db);
-    const now = serverTimestamp();
+    console.log("Creating user profile for new user:", user.uid);
 
-    // 1. Create user profile
+    // Create user profile document
     const profileRef = doc(db, "users", user.uid);
-    batch.set(profileRef, {
+    await setDoc(profileRef, {
         uid: user.uid,
         email: user.email || "",
         displayName: displayName || user.displayName || user.email?.split("@")[0] || "User",
         photoURL: user.photoURL || null,
         isInitialized: true,
-        createdAt: now,
-        updatedAt: now,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
     });
 
-    // 2. Create default accounts
-    DEFAULT_ACCOUNTS.forEach((accountData) => {
-        const accountRef = doc(collection(db, "accounts"));
-        batch.set(accountRef, {
-            ...accountData,
-            userId: user.uid,
-            createdAt: now,
-            updatedAt: now,
-        });
-    });
-
-    // 3. Create default income categories
-    DEFAULT_INCOME_CATEGORIES.forEach((categoryData) => {
-        const categoryRef = doc(collection(db, "categories"));
-        batch.set(categoryRef, {
-            ...categoryData,
-            userId: user.uid,
-        });
-    });
-
-    // 4. Create default expense categories
-    DEFAULT_EXPENSE_CATEGORIES.forEach((categoryData) => {
-        const categoryRef = doc(collection(db, "categories"));
-        batch.set(categoryRef, {
-            ...categoryData,
-            userId: user.uid,
-        });
-    });
-
-    // Commit all changes atomically
-    await batch.commit();
-    console.log("User initialized successfully with default data");
+    console.log("✅ User profile created successfully");
+    console.log("ℹ️  Default book and data will be created by BookContext");
 }
 
 /**
@@ -104,13 +66,12 @@ export async function initializeNewUser(
  * (For migration of existing users if needed)
  */
 export async function markUserAsInitialized(userId: string): Promise<void> {
-    const batch = writeBatch(db);
     const profileRef = doc(db, "users", userId);
 
-    batch.update(profileRef, {
+    await setDoc(profileRef, {
         isInitialized: true,
         updatedAt: serverTimestamp(),
-    });
+    }, { merge: true });
 
-    await batch.commit();
+    console.log("User marked as initialized:", userId);
 }

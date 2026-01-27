@@ -1,0 +1,110 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // User must be authenticated for all operations
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // User can only access their own data
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Helper to check if resource belongs to user (for read/update/delete)
+    // Supports:
+    // 1. OWNER (userId field on document)
+    // 2. MEMBERS (members array on document)
+    // 3. User ID as document ID (for userPreferences/users collections)
+    function isResourceOwner() {
+      return isAuthenticated() && (
+        resource.data.userId == request.auth.uid || 
+        (resource.data.members is list && request.auth.uid in resource.data.members) ||
+        resource.id == request.auth.uid
+      );
+    }
+
+    // Helper to check if new resource will belong to user (for create)
+    function willBeResourceOwner() {
+      return isAuthenticated() && request.resource.data.userId == request.auth.uid;
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+      
+      // Sub-collections within users
+      match /{document=**} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+    
+    // User Preferences
+    match /userPreferences/{userId} {
+      allow read, write: if isResourceOwner(); 
+      // Note: Here {userId} is the document ID, so isResourceOwner catches "resource.id == request.auth.uid"
+    }
+    
+    // Account Activities
+    match /accountActivities/{activityId} {
+      allow read, write: if isResourceOwner();
+    }
+    
+    // Accounts
+    match /accounts/{accountId} {
+      allow read: if isResourceOwner();
+      allow create: if willBeResourceOwner();
+      allow update, delete: if isResourceOwner();
+    }
+    
+    // Transactions
+    match /transactions/{transactionId} {
+      allow read: if isResourceOwner();
+      allow create: if willBeResourceOwner();
+      allow update, delete: if isResourceOwner();
+    }
+    
+    // Categories
+    match /categories/{categoryId} {
+      allow read: if isResourceOwner();
+      allow create: if willBeResourceOwner();
+      allow update, delete: if isResourceOwner();
+    }
+    
+    // Splits
+    match /splits/{splitId} {
+      allow read: if isResourceOwner();
+      allow create: if willBeResourceOwner();
+      allow update, delete: if isResourceOwner();
+    }
+    
+    // Books
+    match /books/{bookId} {
+      // Allow get/list if user is owner OR member
+      allow get: if isResourceOwner(); 
+      allow list: if isAuthenticated() && (
+        resource == null || isResourceOwner()
+      ); 
+      
+      allow create: if willBeResourceOwner();
+      allow update, delete: if isResourceOwner();
+      
+      // Book sub-collections
+      match /{document=**} {
+        // Ensure parent book belongs to user (owner or member)
+        allow read, write: if isAuthenticated() && (
+          get(/databases/$(database)/documents/books/$(bookId)).data.userId == request.auth.uid ||
+          (get(/databases/$(database)/documents/books/$(bookId)).data.members is list && 
+           request.auth.uid in get(/databases/$(database)/documents/books/$(bookId)).data.members)
+        );
+      }
+    }
+    
+    // Default deny all other paths
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
