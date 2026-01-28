@@ -60,7 +60,7 @@ We maintain detailed architectural documentation to help developers understand t
 
 ## 📂 Repository
 
-**GitHub:** [https://github.com/Finance-Team-105/finance-web-with-gnucash-import](https://github.com/Finance-Team-105/finance-web-with-gnucash-import)
+**GitHub:** [https://github.com/GnuCash-With-Web](https://github.com/GnuCash-With-Web)
 
 ---
 
