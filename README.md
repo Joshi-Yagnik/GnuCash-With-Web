@@ -74,7 +74,9 @@ Special thanks for the guidance, support, and motivation to build this project.
 **Finance Team:105**
 
 **Yagnik Joshi**
+
 **Prachi Sukhadiya**
+
 **Anuj Patel**
 
 ---
