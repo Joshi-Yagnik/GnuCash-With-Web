@@ -58,13 +58,21 @@ We maintain detailed architectural documentation to help developers understand t
 
 ---
 
-## 📂 Repository
+## � Acknowledgments & Team
 
-**GitHub:** [https://github.com/Finance-Team-105/finance-web-with-gnucash-import](https://github.com/Finance-Team-105/finance-web-with-gnucash-import)
+### 🌟 Mentor & Guide
+**Hiten Sadani Sir**  
+Special thanks for the guidance, support, and motivation to build this project.
 
+### 💻 Developed By
+**Finance Team:105**
+
+**Yagnik Joshi**
+**Prachi Sukhadiya**
+**Anuj Patel**
 ---
 
-## 🚀 Getting Started
+## �🚀 Getting Started
 
 ### Prerequisites
 Make sure **Node.js** and **npm** are installed.
