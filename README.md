@@ -60,7 +60,22 @@ We maintain detailed architectural documentation to help developers understand t
 
 ## 📂 Repository
 
-**GitHub:** [https://github.com/Finance-Team-105/finance-web-with-gnucash-import](https://github.com/Finance-Team-105/finance-web-with-gnucash-import)
+**GitHub:** [https://github.com/Joshi-Yagnik/GnuCash-With-Web](https://github.com/Joshi-Yagnik/GnuCash-With-Web)
+
+---
+
+## � Acknowledgments & Team
+
+### 🌟 Mentor & Guide
+**Hiten Sadani Sir**  
+Special thanks for the guidance, support, and motivation to build this project.
+
+### 💻 Developed By
+**Finance Team:105**
+
+**Yagnik Joshi**
+**Prachi Sukhadiya**
+**Anuj Patel**
 
 ---
 
