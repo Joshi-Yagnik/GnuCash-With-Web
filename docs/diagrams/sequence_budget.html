@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sequence Diagram - Budget Management - Finance Team:105</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 40px;
+            background: white;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .mermaid {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .instructions {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .back-button {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 500;
+        }
+
+        .back-button::before {
+            content: '← ';
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="index.html" class="back-button">Back to All Diagrams</a>
+
+        <div class="instructions">
+            <strong>To save as image:</strong>
+            Right-click → Save image as <br>
+            Or: F12 → Ctrl+Shift+P → "Capture full size screenshot"
+        </div>
+
+        <h1>Sequence Diagram - Budget Management</h1>
+
+        <div class="mermaid">
+            sequenceDiagram
+            actor User
+            participant BudgetUI
+            participant App
+            participant Firestore
+            participant Analytics
+
+            rect rgb(200, 220, 250)
+            Note over User,Analytics: Creating a Budget
+
+            User->>BudgetUI: Navigate to Budgets page
+            BudgetUI->>App: Request categories
+            App->>Firestore: Query categories
+            Firestore->>App: Return categories
+            App->>BudgetUI: Display categories
+
+            User->>BudgetUI: Click Create Budget
+            BudgetUI->>User: Show creation form
+            User->>BudgetUI: Select category (Groceries)
+            User->>BudgetUI: Set amount ₹15,000
+            User->>BudgetUI: Click Save
+
+            BudgetUI->>App: Submit budget
+            App->>Firestore: Create budget document
+            Firestore->>App: Budget created
+            App->>BudgetUI: Success
+            BudgetUI->>User: Show success message
+            end
+
+            rect rgb(250, 220, 200)
+            Note over User,Analytics: Tracking Budget Progress
+
+            User->>BudgetUI: View dashboard
+            BudgetUI->>App: Request budget analysis
+
+            loop For each budget
+            App->>Firestore: Get budget
+            Firestore->>App: Budget data
+
+            App->>Analytics: Calculate spending
+            Analytics->>Firestore: Query transactions
+            Firestore->>Analytics: Return transactions
+
+            Analytics->>Analytics: Sum amounts
+            Analytics->>Analytics: Calculate usage %
+            Note over Analytics: &lt; 80% Safe<br />80–100% Warning<br />&gt; 100% Exceeded
+
+            Analytics->>App: Return analysis
+            end
+
+            App->>BudgetUI: Send analysis results
+            BudgetUI->>User: Display budget cards
+            end
+
+            rect rgb(220, 250, 220)
+            Note over User,Analytics: Real-time Budget Updates
+
+            Note over User,Firestore: Expense impacts budget
+
+            User->>App: Add expense ₹1,200
+            App->>Firestore: Save transaction
+            Firestore->>App: Transaction saved
+
+            App->>Analytics: Recalculate usage
+            Analytics->>App: Updated budget usage
+
+            alt Budget exceeded
+            App->>User: Show alert 🚨
+            end
+
+            App->>BudgetUI: Update budget UI
+            end
+
+            rect rgb(250, 200, 220)
+            Note over User,Analytics: Edit or Delete Budget
+
+            User->>BudgetUI: Edit budget
+            User->>BudgetUI: Change amount to ₹20,000
+            BudgetUI->>App: Update budget
+            App->>Firestore: Update document
+            Firestore->>App: Updated
+
+            alt Delete budget
+            User->>BudgetUI: Delete budget
+            BudgetUI->>App: Delete request
+            App->>Firestore: Delete document
+            Firestore->>App: Deleted
+            end
+            end
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            sequence: {
+                useMaxWidth: true
+            }
+        });
+    </script>
+</body>
+
+</html>

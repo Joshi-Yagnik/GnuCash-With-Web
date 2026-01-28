@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-R Diagram - Finance Team:105</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 40px;
+            background: white;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            background: white;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .mermaid {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .instructions {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .back-button {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 500;
+            transition: background 0.3s ease;
+        }
+
+        .back-button:hover {
+            background: #5568d3;
+        }
+
+        .back-button::before {
+            content: '← ';
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="index.html" class="back-button">Back to All Diagrams</a>
+        <div class="instructions">
+            <strong>To save as image:</strong> Right-click on the diagram → Save image as → Choose location
+            <br>Or use browser screenshot tool: Press F12 → Ctrl+Shift+P → Type "screenshot" → "Capture full size
+            screenshot"
+        </div>
+        <h1>Entity-Relationship Diagram - Finance Team:105</h1>
+        <div class="mermaid">
+            erDiagram
+            USER ||--|| USER_PROFILE : has
+            USER ||--o{ BOOK : owns
+            USER ||--|| USER_SETTINGS : has
+
+            BOOK ||--o{ BOOK_MEMBER : "shared with"
+            BOOK ||--o{ ACCOUNT : contains
+            BOOK ||--o{ TRANSACTION : contains
+            BOOK ||--o{ CATEGORY : contains
+            BOOK ||--o{ TAG : contains
+            BOOK ||--o{ BUDGET : contains
+            BOOK ||--o{ RECURRING_TRANSACTION : contains
+
+            ACCOUNT }o--o| ACCOUNT : "parent-child"
+            ACCOUNT ||--o{ SPLIT : "affected by"
+            ACCOUNT ||--o{ ACCOUNT_ACTIVITY : generates
+
+            TRANSACTION ||--|{ SPLIT : "has 2+"
+            TRANSACTION }o--o{ TAG : tagged
+
+            CATEGORY ||--o{ BUDGET : "budgeted in"
+
+            SPLIT }o--|| ACCOUNT : affects
+
+            USER {
+            string uid PK
+            string email
+            boolean emailVerified
+            string displayName
+            string photoURL
+            datetime createdAt
+            }
+
+            USER_PROFILE {
+            string uid PK "FK to USER"
+            string email
+            string displayName
+            string photoURL
+            string defaultCurrency
+            boolean isInitialized
+            datetime createdAt
+            datetime updatedAt
+            }
+
+            USER_SETTINGS {
+            string id PK
+            string userId FK
+            string defaultCurrency
+            string[] preferredCurrencies
+            datetime createdAt
+            datetime updatedAt
+            }
+
+            BOOK {
+            string id PK
+            string userId FK
+            string name
+            string description
+            string defaultCurrency
+            boolean isDefault
+            datetime createdAt
+            datetime updatedAt
+            object settings
+            }
+
+            BOOK_MEMBER {
+            string id PK
+            string bookId FK
+            string userId FK
+            string email
+            enum role "owner|editor|viewer"
+            datetime invitedAt
+            datetime acceptedAt
+            string invitedBy
+            }
+
+            ACCOUNT {
+            string id PK
+            string userId FK
+            string name
+            enum type "asset|liability|income|expense"
+            number balance
+            string currency
+            string color
+            string icon
+            string parentId FK "nullable"
+            string path
+            boolean isCategory
+            datetime createdAt
+            datetime updatedAt
+            }
+
+            TRANSACTION {
+            string id PK
+            string userId FK
+            string description
+            datetime date
+            string number "check/receipt"
+            string notes
+            string currency
+            boolean isRecurring
+            string scheduleId FK "nullable"
+            datetime createdAt
+            datetime updatedAt
+            }
+
+            SPLIT {
+            string id PK
+            string transactionId FK
+            string accountId FK
+            string accountPath
+            enum accountType
+            number value "positive or negative"
+            string memo
+            enum reconciledState "n|c|y"
+            }
+
+            CATEGORY {
+            string id PK
+            string userId FK
+            string name
+            enum type "income|expense"
+            string icon
+            string color
+            }
+
+            TAG {
+            string id PK
+            string userId FK
+            string bookId FK
+            string name
+            string color
+            datetime createdAt
+            datetime updatedAt
+            }
+
+            BUDGET {
+            string id PK
+            string userId FK
+            string bookId FK
+            string categoryId FK
+            number amount
+            string period "monthly"
+            datetime periodStart
+            datetime createdAt
+            datetime updatedAt
+            }
+
+            RECURRING_TRANSACTION {
+            string id PK
+            string userId FK
+            string bookId FK
+            enum frequency "daily|weekly|monthly|yearly|custom"
+            number interval
+            datetime startDate
+            datetime endDate "nullable"
+            datetime lastRun "nullable"
+            datetime nextRun
+            boolean active
+            object template
+            datetime createdAt
+            datetime updatedAt
+            }
+
+            ACCOUNT_ACTIVITY {
+            string id PK
+            string userId FK
+            string accountId FK
+            string accountName
+            enum type "account_update|balance_update|currency_update"
+            object changes
+            datetime date
+            datetime createdAt
+            }
+        </div>
+    </div>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default'
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Management & Planning Workflow - Finance Team:105</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 40px;
+            background: white;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .mermaid {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .instructions {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .back-button {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 500;
+        }
+
+        .back-button::before {
+            content: '← ';
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="index.html" class="back-button">Back to All Diagrams</a>
+
+        <div class="instructions">
+            <strong>To save as image:</strong>
+            Right-click → Save image as <br>
+            Or: F12 → Ctrl+Shift+P → "Capture full size screenshot"
+        </div>
+
+        <h1>Main App Phase 2: Management & Planning</h1>
+
+        <div class="mermaid">
+            flowchart TB
+            Dashboard[Dashboard Page] --> UserAction{User Action?}
+
+            style Dashboard fill:#2196F3,stroke:#1565C0,color:#fff
+            style BooksPage fill:#673AB7,stroke:#4527A0,color:#fff
+            style BudgetsPage fill:#FF5722,stroke:#D84315,color:#fff
+            style RecurringPage fill:#795548,stroke:#5D4037,color:#fff
+            style TagsPage fill:#E91E63,stroke:#C2185B,color:#fff
+
+            %% --- Book Management ---
+            UserAction -->|Manage Books| BooksPage[Books Management Page]
+            BooksPage --> BookAction{Book Action?}
+            BookAction -->|Create| CreateBook[Create New Book]
+            BookAction -->|Switch| SwitchBook[Switch Active Book]
+            BookAction -->|Edit| EditBook[Edit Book Details]
+            BookAction -->|Delete| DeleteBook[Delete Book]
+            BookAction -->|Share| ShareBook[Share Book with User]
+            CreateBook --> BooksPage
+            SwitchBook --> Dashboard
+            EditBook --> BooksPage
+            DeleteBook --> BooksPage
+            ShareBook --> SendInvite[Send Book Invitation]
+            SendInvite --> BooksPage
+
+            %% --- Category Management ---
+            UserAction -->|Manage Categories| CategoriesPage[Categories Page]
+            CategoriesPage --> CatAction{Category Action?}
+            CatAction -->|Create| CreateCategory[Create New Category]
+            CatAction -->|Edit| EditCategory[Edit Category]
+            CatAction -->|Delete| DeleteCategory[Delete Category]
+            CreateCategory --> CategoriesPage
+            EditCategory --> CategoriesPage
+            DeleteCategory --> CategoriesPage
+
+            %% --- Tag Management ---
+            UserAction -->|Manage Tags| TagsPage[Tags Management Page]
+            TagsPage --> TagAction{Tag Action?}
+            TagAction -->|Create| CreateTag[Create New Tag]
+            TagAction -->|Edit| EditTag[Edit Tag]
+            TagAction -->|Delete| DeleteTag[Delete Tag]
+            CreateTag --> TagsPage
+            EditTag --> TagsPage
+            DeleteTag --> TagsPage
+
+            %% --- Budget Management ---
+            UserAction -->|Manage Budgets| BudgetsPage[Budgets Page]
+            BudgetsPage --> BudgetAction{Budget Action?}
+            BudgetAction -->|Create| CreateBudget[Set Budget for Category]
+            BudgetAction -->|Edit| EditBudget[Edit Budget Amount]
+            BudgetAction -->|Delete| DeleteBudget[Delete Budget]
+            BudgetAction -->|View| ViewBudgetProgress[View Budget vs Actual]
+            CreateBudget --> BudgetsPage
+            EditBudget --> BudgetsPage
+            DeleteBudget --> BudgetsPage
+            ViewBudgetProgress --> BudgetsPage
+
+            %% --- Recurring Transactions ---
+            UserAction -->|Recurring Transactions| RecurringPage[Recurring Transactions Page]
+            RecurringPage --> RecurAction{Recurring Action?}
+            RecurAction -->|Create| CreateRecurring[Create Recurring Template]
+            RecurAction -->|Edit| EditRecurring[Edit Recurring Schedule]
+            RecurAction -->|Delete| DeleteRecurring[Delete Recurring]
+            RecurAction -->|Toggle| ToggleActive[Activate/Deactivate]
+            CreateRecurring --> SetFrequency[Set Frequency & Dates]
+            SetFrequency --> RecurringPage
+            EditRecurring --> RecurringPage
+            DeleteRecurring --> RecurringPage
+            ToggleActive --> RecurringPage
+        </div>
+    </div>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -51,14 +51,47 @@ export default function Auth() {
       await signInWithGoogle();
       toast({ title: "Welcome!", description: "Successfully signed in with Google" });
     } catch (error: any) {
+      console.error("Google sign-in error details:", error);
+
+      let title = "Google sign-in failed";
       let message = "Failed to sign in with Google";
-      if (error.code === "auth/popup-closed-by-user") {
-        message = "Sign-in cancelled";
-      } else if (error.code === "auth/popup-blocked") {
-        message = "Popup was blocked. Please allow popups and try again";
+
+      switch (error.code) {
+        case "auth/popup-closed-by-user":
+          title = "Sign-in Cancelled";
+          message = "You closed the sign-in window";
+          break;
+        case "auth/popup-blocked":
+          title = "Popup Blocked";
+          message = "Please allow popups for this site and try again";
+          break;
+        case "auth/unauthorized-domain":
+          title = "Configuration Error";
+          message = "This domain is not authorized. Please contact support.";
+          break;
+        case "auth/operation-not-allowed":
+          title = "Sign-in Method Disabled";
+          message = "Google sign-in is not enabled. Please contact support.";
+          console.error("⚠️ ACTION REQUIRED: Enable Google Sign-In in Firebase Console → Authentication → Sign-in method");
+          break;
+        case "auth/invalid-credential":
+        case "auth/invalid-api-key":
+          title = "Configuration Error";
+          message = "Authentication configuration error. Please contact support.";
+          console.error("⚠️ ACTION REQUIRED: Check Firebase configuration and OAuth settings");
+          break;
+        case "auth/network-request-failed":
+          title = "Network Error";
+          message = "Could not connect to authentication service. Check your internet connection.";
+          break;
+        default:
+          console.error("Unhandled error code:", error.code);
+          console.error("Error message:", error.message);
+          message = error.message || "Failed to sign in with Google";
       }
+
       toast({
-        title: "Google sign-in failed",
+        title,
         description: message,
         variant: "destructive",
       });
@@ -116,9 +149,9 @@ export default function Auth() {
     setLoading(true);
     try {
       await signUp(email, password);
-      toast({ 
-        title: "Verification email sent!", 
-        description: "Please check your inbox to verify your email address" 
+      toast({
+        title: "Verification email sent!",
+        description: "Please check your inbox to verify your email address"
       });
       navigate("/verify-email");
     } catch (error: any) {

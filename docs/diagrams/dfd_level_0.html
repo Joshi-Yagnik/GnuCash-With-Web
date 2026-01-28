@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DFD Level 0 - Finance Joshi</title>
+    <title>DFD Level 0 - Finance Team:105</title>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <style>
         body {
@@ -38,11 +38,32 @@
             border-radius: 5px;
             margin-bottom: 20px;
         }
+
+        .back-button {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 500;
+            transition: background 0.3s ease;
+        }
+
+        .back-button:hover {
+            background: #5568d3;
+        }
+
+        .back-button::before {
+            content: '← ';
+        }
     </style>
 </head>
 
 <body>
     <div class="container">
+        <a href="index.html" class="back-button">Back to All Diagrams</a>
         <div class="instructions">
             <strong>To save as image:</strong> Right-click on the diagram → Save image as → Choose location
             <br>Or use browser screenshot tool: Press F12 → Ctrl+Shift+P → Type "screenshot" → "Capture full size
@@ -55,7 +76,7 @@
             GoogleAuth((Google OAuth))
             EmailService((Email Service))
 
-            System[Finance Joshi System]
+            System[Finance Team:105 System]
 
             User -->|Registration Details| System
             User -->|Login Credentials| System

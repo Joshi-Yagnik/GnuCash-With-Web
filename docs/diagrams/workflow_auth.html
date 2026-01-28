@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication Flow - Finance Team:105</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 40px;
+            background: white;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .mermaid {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .instructions {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .back-button {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 500;
+        }
+
+        .back-button::before {
+            content: '← ';
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="index.html" class="back-button">Back to All Diagrams</a>
+
+        <div class="instructions">
+            <strong>To save as image:</strong>
+            Right-click → Save image as <br>
+            Or: F12 → Ctrl+Shift+P → "Capture full size screenshot"
+        </div>
+
+        <h1>Part 1: Authentication & Initialization Workflow</h1>
+
+        <div class="mermaid">
+            flowchart TB
+            Start([User Opens App]) --> CheckAuth{User Authenticated?}
+
+            CheckAuth -->|No| AuthPage[Auth Page]
+            AuthPage --> SignUpOrIn{Sign Up or Sign In?}
+
+            SignUpOrIn -->|Sign Up| EmailSignUp[Email/Password Signup]
+            SignUpOrIn -->|Sign In| EmailSignIn[Email/Password Login]
+            SignUpOrIn -->|Google| GoogleAuth[Google OAuth]
+
+            EmailSignUp --> SendVerification[Send Email Verification]
+            SendVerification --> VerifyEmail[Verify Email Page]
+
+            EmailSignIn --> CheckVerified{Email Verified?}
+            GoogleAuth --> CheckVerified
+
+            CheckVerified -->|No| VerifyEmail
+            CheckVerified -->|Yes| CheckInit{User Initialized?}
+
+            VerifyEmail --> UserVerifies[User Verifies Email]
+            UserVerifies --> CheckInit
+
+            CheckInit -->|No| InitUser[Initialize User Data]
+            InitUser --> CreateProfile[Create User Profile]
+            CreateProfile --> CreateDefaultBook[Create Default Book Main]
+            CreateDefaultBook --> CreateDefaultAccounts[Create Default Accounts in Book]
+            CreateDefaultAccounts --> CreateDefaultCategories[Create Default Categories]
+            CreateDefaultCategories --> SetInitFlag[Set isInitialized Flag]
+
+            CheckInit -->|Yes| CheckAuth
+            CheckAuth -->|Yes & Verified| SelectBook{Has Multiple Books?}
+
+            SelectBook -->|No| LoadDefaultBook[Load Default Book]
+            SelectBook -->|Yes| BookSelector[Select Active Book]
+            BookSelector --> LoadBookData[Load Book Data]
+            LoadDefaultBook --> LinkToMain[[Go to Main App Workflow]]
+            LoadBookData --> LinkToMain
+            SetInitFlag --> LinkToMain
+
+            style Start fill:#4CAF50,stroke:#2E7D32,color:#fff
+            style AuthPage fill:#FF9800,stroke:#E65100,color:#fff
+            style InitUser fill:#9C27B0,stroke:#6A1B9A,color:#fff
+            style CreateDefaultBook fill:#9C27B0,stroke:#6A1B9A,color:#fff
+            style LinkToMain fill:#2196F3,stroke:#1565C0,color:#fff
+        </div>
+    </div>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            }
+        });
+    </script>
+</body>
+
+</html>

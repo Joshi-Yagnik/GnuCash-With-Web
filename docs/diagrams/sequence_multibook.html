@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sequence Diagram - Multi-Book Workflow - Finance Team:105</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 40px;
+            background: white;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            background: white;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .mermaid {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .instructions {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .back-button {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 500;
+            transition: background 0.3s ease;
+        }
+
+        .back-button:hover {
+            background: #5568d3;
+        }
+
+        .back-button::before {
+            content: '← ';
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="index.html" class="back-button">Back to All Diagrams</a>
+        <div class="instructions">
+            <strong>To save as image:</strong> Right-click on the diagram → Save image as → Choose location
+            <br>Or use browser screenshot tool: Press F12 → Ctrl+Shift+P → Type "screenshot" → "Capture full size
+            screenshot"
+        </div>
+        <h1>Sequence Diagram - Multi-Book Workflow</h1>
+        <div class="mermaid">
+            sequenceDiagram
+            actor User
+            participant BooksUI
+            participant App
+            participant Firestore
+            participant EmailService
+            actor Invitee
+
+            rect rgb(200, 220, 250)
+            Note over User,Firestore: Creating a New Book
+            User->>BooksUI: Navigate to Books page
+            BooksUI->>App: Request user's books
+            App->>Firestore: Query books where userId = currentUser
+            Firestore->>App: Return books list
+            App->>BooksUI: Display books
+
+            User->>BooksUI: Click "Create New Book"
+            BooksUI->>User: Show book creation form
+            User->>BooksUI: Enter name, description, currency
+            Note over User,BooksUI: e.g., "Business Accounts"<br />Currency: USD
+            User->>BooksUI: Click Create
+
+            BooksUI->>App: Submit book data
+            App->>Firestore: Create book document
+            Note over Firestore: books/{bookId}<br />userId, name, defaultCurrency,<br />isDefault: false
+            Firestore->>App: Book created (bookId)
+
+            App->>Firestore: Create default accounts for book
+            Note over Firestore: books/{bookId}/accounts
+            Firestore->>App: Accounts created
+
+            App->>Firestore: Create default categories
+            Note over Firestore: books/{bookId}/categories
+            Firestore->>App: Categories created
+
+            App->>BooksUI: Book created successfully
+            BooksUI->>User: Show success & updated list
+            end
+
+            rect rgb(220, 250, 200)
+            Note over User,Firestore: Switching Between Books
+            User->>BooksUI: Select different book
+            BooksUI->>App: Switch to bookId
+            App->>App: Update active book context
+
+            App->>Firestore: Load accounts for book
+            Note over Firestore: books/{bookId}/accounts
+            Firestore->>App: Return accounts
+
+            App->>Firestore: Load transactions for book
+            Note over Firestore: books/{bookId}/transactions
+            Firestore->>App: Return transactions
+
+            App->>Firestore: Load other book data
+            Firestore->>App: Return data
+
+            App->>BooksUI: Book data loaded
+            BooksUI->>User: Display new book's dashboard
+            end
+
+            rect rgb(250, 220, 220)
+            Note over User,Invitee: Sharing a Book
+            User->>BooksUI: Click "Share Book"
+            BooksUI->>User: Show share dialog
+            User->>BooksUI: Enter invitee email & role
+            Note over User,BooksUI: email: friend@example.com<br />role: editor
+            User->>BooksUI: Send invitation
+
+            BooksUI->>App: Create book invitation
+            App->>Firestore: Create invitation document
+            Note over Firestore: bookInvitations/{inviteId}<br />bookId, email, role,<br />status: pending
+            Firestore->>App: Invitation created
+
+            App->>EmailService: Send invitation email
+            EmailService->>Invitee: Email with invitation link
+
+            App->>BooksUI: Invitation sent
+            BooksUI->>User: Show confirmation
+
+            Invitee->>EmailService: Click invitation link
+            EmailService->>App: Open invitation page
+            App->>Firestore: Verify invitation
+            Firestore->>App: Return invitation details
+            App->>Invitee: Show book details & accept/reject
+
+            Invitee->>App: Accept invitation
+            App->>Firestore: Create BookMember document
+            Note over Firestore: bookMembers/{memberId}<br />bookId, userId, role: editor
+            Firestore->>App: Member added
+
+            App->>Firestore: Update invitation status
+            Note over Firestore: status: accepted
+            Firestore->>App: Updated
+
+            App->>Invitee: Grant access to book
+            Invitee->>App: View shared book
+            end
+        </div>
+    </div>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            sequence: {
+                useMaxWidth: true
+            }
+        });
+    </script>
+</body>
+
+</html>

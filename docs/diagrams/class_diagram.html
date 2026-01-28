@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Class Diagram - Finance Joshi</title>
+    <title>Class Diagram - Finance Team:105</title>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <style>
         body {
@@ -38,17 +38,38 @@
             border-radius: 5px;
             margin-bottom: 20px;
         }
+
+        .back-button {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 500;
+            transition: background 0.3s ease;
+        }
+
+        .back-button:hover {
+            background: #5568d3;
+        }
+
+        .back-button::before {
+            content: '← ';
+        }
     </style>
 </head>
 
 <body>
     <div class="container">
+        <a href="index.html" class="back-button">Back to All Diagrams</a>
         <div class="instructions">
             <strong>To save as image:</strong> Right-click on the diagram → Save image as → Choose location
             <br>Or use browser screenshot tool: Press F12 → Ctrl+Shift+P → Type "screenshot" → "Capture full size
             screenshot"
         </div>
-        <h1>UML Class Diagram - Finance Joshi</h1>
+        <h1>UML Class Diagram - Finance Team:105</h1>
         <div class="mermaid">
             classDiagram
             class User {
@@ -64,23 +85,59 @@
             }
 
             class UserProfile {
+            +uid string
+            +email string
+            +displayName string
+            +photoURL string
+            +defaultCurrency Currency
+            +isInitialized boolean
+            +createdAt Date
+            +updatedAt Date
+            +updateProfile()
+            +uploadPhoto()
+            }
+
+            class Book {
             +id string
             +userId string
             +name string
+            +description string
+            +defaultCurrency Currency
+            +isDefault boolean
+            +createdAt Date
+            +updatedAt Date
+            +settings object
+            +create()
+            +update()
+            +delete()
+            +share()
+            }
+
+            class BookMember {
+            +id string
+            +bookId string
+            +userId string
             +email string
-            +photoURL string
-            +isInitialized boolean
-            +updateProfile()
-            +uploadPhoto()
+            +role enum
+            +invitedAt Date
+            +acceptedAt Date
+            +invitedBy string
             }
 
             class Account {
             +id string
             +userId string
             +name string
+            +type AccountType
             +balance number
-            +currency string
+            +currency Currency
             +color string
+            +icon string
+            +parentId string
+            +path string
+            +isCategory boolean
+            +createdAt Date
+            +updatedAt Date
             +create()
             +update()
             +delete()
@@ -91,11 +148,15 @@
             +id string
             +userId string
             +description string
-            +amount number
-            +category string
-            +accountId string
             +date Date
-            +isSplit boolean
+            +number string
+            +notes string
+            +splits Split[]
+            +currency Currency
+            +isRecurring boolean
+            +scheduleId string
+            +createdAt Date
+            +updatedAt Date
             +create()
             +update()
             +delete()
@@ -105,8 +166,11 @@
             +id string
             +transactionId string
             +accountId string
-            +accountName string
-            +amount number
+            +accountPath string
+            +accountType AccountType
+            +value number
+            +memo string
+            +reconciledState enum
             +create()
             +delete()
             }
@@ -115,10 +179,89 @@
             +id string
             +userId string
             +name string
+            +type enum
             +icon string
             +color string
             +create()
             +update()
+            +delete()
+            }
+
+            class Tag {
+            +id string
+            +userId string
+            +bookId string
+            +name string
+            +color string
+            +createdAt Date
+            +updatedAt Date
+            +create()
+            +update()
+            +delete()
+            }
+
+            class Budget {
+            +id string
+            +userId string
+            +bookId string
+            +categoryId string
+            +amount number
+            +period string
+            +periodStart Date
+            +createdAt Date
+            +updatedAt Date
+            +create()
+            +update()
+            +delete()
+            +checkProgress()
+            }
+
+            class RecurringTransaction {
+            +id string
+            +userId string
+            +bookId string
+            +frequency RecurringFrequency
+            +interval number
+            +startDate Date
+            +endDate Date
+            +lastRun Date
+            +nextRun Date
+            +active boolean
+            +template object
+            +createdAt Date
+            +updatedAt Date
+            +create()
+            +update()
+            +execute()
+            +deactivate()
+            }
+
+            class AccountActivity {
+            +id string
+            +userId string
+            +accountId string
+            +accountName string
+            +type ActivityType
+            +changes object
+            +date Date
+            +createdAt Date
+            }
+
+            class UserSettings {
+            +id string
+            +userId string
+            +defaultCurrency Currency
+            +preferredCurrencies Currency[]
+            +createdAt Date
+            +updatedAt Date
+            }
+
+            class ExchangeRate {
+            +id string
+            +baseCurrency Currency
+            +targetCurrency Currency
+            +rate number
+            +lastUpdated Date
             }
 
             class AuthContext {
@@ -131,6 +274,7 @@
 
             class FinanceContext {
             +loading boolean
+            +currentBook Book
             +addAccount()
             +addTransaction()
             +addCategory()
@@ -144,17 +288,26 @@
             +getStorage()
             }
 
-            User --> UserProfile
-            User --> Account
-            User --> Transaction
-            User --> Category
-            Account --> Transaction
-            Transaction --> Split
-            Transaction --> Category
-            Transaction --> Account
-            Split --> Account
-            AuthContext --> User
-            FinanceContext --> FirebaseService
+            %% Relationships
+            User "1" --> "1" UserProfile : has
+            User "1" --> "0..*" Book : owns
+            Book "1" --> "0..*" BookMember : has
+            Book "1" --> "0..*" Account : contains
+            Book "1" --> "0..*" Transaction : contains
+            Book "1" --> "0..*" Category : contains
+            Book "1" --> "0..*" Tag : contains
+            Book "1" --> "0..*" Budget : contains
+            Book "1" --> "0..*" RecurringTransaction : contains
+            Account "0..1" --> "0..*" Account : parent-child
+            Transaction "1" --> "2..*" Split : has
+            Split "1" --> "1" Account : affects
+            Budget "1" --> "1" Category : tracks
+            Category "1" --> "0..*" Transaction : categorizes
+            Account "1" --> "0..*" AccountActivity : generates
+            User "1" --> "1" UserSettings : has
+            AuthContext --> User : manages
+            FinanceContext --> FirebaseService : uses
+            FinanceContext --> Book : manages
         </div>
     </div>
     <script>

@@ -16,6 +16,8 @@ import { Button } from "@/components/ui/button";
 import { EditTransactionDialog } from "./EditTransactionDialog";
 import { formatCurrency } from "@/lib/currencyUtils";
 import { inferTransactionType } from "@/lib/accountingUtils";
+import { SwipeableItem } from "@/components/SwipeableItem";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 
 interface TransactionItemProps {
   transaction: Transaction;
@@ -46,6 +48,7 @@ const typeConfig = {
 export function TransactionItem({ transaction, index = 0 }: TransactionItemProps) {
   const { getAccountById, deleteTransaction } = useFinance();
   const [editOpen, setEditOpen] = useState(false);
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   // Derive display properties from splits (Double-Entry Logic)
   // TODO: Pass viewedAccountId prop if we want account-specific perspective (e.g. Red/Green based on debit/credit)
@@ -115,75 +118,77 @@ export function TransactionItem({ transaction, index = 0 }: TransactionItemProps
 
   const formattedDate = format(new Date(transaction.date), "MMM dd, yyyy");
 
-  return (
+  const TransactionCard = (
     <motion.div
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: index * 0.05, duration: 0.3 }}
       className={cn(
-        "flex items-center justify-between p-4 rounded-xl",
+        "flex items-center justify-between p-3 md:p-4 rounded-xl",
         "bg-card hover:bg-muted/50 transition-all duration-200",
         "border border-border/50 hover:border-border",
         "group cursor-pointer"
       )}
     >
-      <div className="flex items-center gap-4">
-        <div className={cn("p-2.5 rounded-xl", config.bgColor)}>
-          <Icon className={cn("w-5 h-5", config.color)} />
+      <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
+        <div className={cn("p-2 md:p-2.5 rounded-xl", config.bgColor)}>
+          <Icon className={cn("w-4 h-4 md:w-5 md:h-5", config.color)} />
         </div>
-        <div>
+        <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <p className="font-medium text-foreground">{transaction.description}</p>
+            <p className="font-medium text-foreground text-sm md:text-base truncate">{transaction.description}</p>
             {/* Split badge? transaction.splits.length > 2? */}
             {transaction.splits && transaction.splits.length > 2 && (
-              <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
+              <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium flex-shrink-0">
                 <Split className="w-3 h-3" />
-                <span>Split</span>
+                <span className="hidden sm:inline">Split</span>
               </div>
             )}
           </div>
           <div className="flex items-center gap-2 mt-0.5">
-            <span className="text-sm text-muted-foreground">{primaryAccountName}</span>
+            <span className="text-xs md:text-sm text-muted-foreground truncate">{primaryAccountName}</span>
             {secondaryAccountName && (
               <>
-                <ArrowLeftRight className="w-3 h-3 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">{secondaryAccountName}</span>
+                <ArrowLeftRight className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                <span className="text-xs md:text-sm text-muted-foreground truncate">{secondaryAccountName}</span>
               </>
             )}
           </div>
         </div>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
         <div className="text-right">
-          <p className={cn("font-semibold", config.color)}>
+          <p className={cn("font-semibold text-sm md:text-base", config.color)}>
             {displayType === "income" ? "+" : displayType === "expense" ? "-" : ""}
             {formatCurrency(displayAmount, transaction.currency || 'INR')}
           </p>
           <p className="text-xs text-muted-foreground">{formattedDate}</p>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-primary"
-          onClick={(e) => {
-            e.stopPropagation();
-            setEditOpen(true);
-          }}
-        >
-          <Pencil className="w-4 h-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
-          onClick={(e) => {
-            e.stopPropagation();
-            deleteTransaction(transaction.id);
-          }}
-        >
-          <Trash2 className="w-4 h-4" />
-        </Button>
+        <div className="hidden md:flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-primary"
+            onClick={(e) => {
+              e.stopPropagation();
+              setEditOpen(true);
+            }}
+          >
+            <Pencil className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+            onClick={(e) => {
+              e.stopPropagation();
+              deleteTransaction(transaction.id);
+            }}
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
       </div>
 
       <EditTransactionDialog
@@ -193,4 +198,18 @@ export function TransactionItem({ transaction, index = 0 }: TransactionItemProps
       />
     </motion.div>
   );
+
+  // On mobile, wrap in SwipeableItem for swipe gestures
+  if (isMobile) {
+    return (
+      <SwipeableItem
+        onEdit={() => setEditOpen(true)}
+        onDelete={() => deleteTransaction(transaction.id)}
+      >
+        {TransactionCard}
+      </SwipeableItem>
+    );
+  }
+
+  return TransactionCard;
 }

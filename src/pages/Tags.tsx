@@ -6,6 +6,7 @@ import { useTags } from "@/hooks/useTags";
 import { AddTagDialog } from "@/components/AddTagDialog";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
+import { MobileFAB } from "@/components/mobile/MobileFAB";
 
 export default function Tags() {
     const { tags, loading, deleteTag } = useTags();
@@ -20,42 +21,46 @@ export default function Tags() {
 
     return (
         <AppLayout>
-            <div className="space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-4 md:space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 md:gap-4">
                     <div>
                         <motion.h1
                             initial={{ opacity: 0, y: -10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="text-3xl font-display font-bold text-foreground flex items-center gap-2"
+                            className="text-2xl md:text-3xl font-display font-bold text-foreground flex items-center gap-2"
                         >
-                            <Hash className="w-8 h-8" />
+                            <Hash className="w-6 h-6 md:w-8 md:h-8" />
                             Tags
                         </motion.h1>
                         <motion.p
-                            initial={{ opacity: 0, y: -10 }}
+                            initial={{ opacity: 0, y: - 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.1 }}
-                            className="text-muted-foreground mt-1"
+                            className="text-sm md:text-base text-muted-foreground mt-1"
                         >
                             Organize transactions with flexible tags
                         </motion.p>
                     </div>
-                    <AddTagDialog />
+                    <div className="hidden md:block">
+                        <AddTagDialog />
+                    </div>
                 </div>
 
                 {tags.length === 0 ? (
                     <Card>
                         <CardContent className="flex flex-col items-center justify-center py-12 text-center">
                             <Hash className="w-12 h-12 text-muted-foreground mb-4" />
-                            <h3 className="text-lg font-semibold mb-2">No tags yet</h3>
-                            <p className="text-muted-foreground max-w-sm mb-6">
+                            <h3 className="text-base md:text-lg font-semibold mb-2">No tags yet</h3>
+                            <p className="text-sm md:text-base text-muted-foreground max-w-sm mb-6">
                                 Create custom tags to organize your transactions better.
                             </p>
-                            <AddTagDialog />
+                            <div className="hidden md:block">
+                                <AddTagDialog />
+                            </div>
                         </CardContent>
                     </Card>
                 ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
                         {tags.map((tag, index) => (
                             <motion.div
                                 key={tag.id}
@@ -72,7 +77,7 @@ export default function Tags() {
                                         {tag.name.charAt(0).toUpperCase()}
                                     </div>
                                     <div>
-                                        <h3 className="font-semibold">{tag.name}</h3>
+                                        <h3 className="font-semibold text-sm md:text-base">{tag.name}</h3>
                                         <div className="text-xs text-muted-foreground">
                                             Created {(() => {
                                                 const date = tag.createdAt;
@@ -104,6 +109,9 @@ export default function Tags() {
                     </div>
                 )}
             </div>
+
+            {/* Mobile FAB */}
+            <MobileFAB icon={<Hash className="w-6 h-6" />} onClick={() => {/* Open add tag */ }} />
         </AppLayout>
     );
 }

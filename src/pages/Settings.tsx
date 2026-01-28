@@ -22,22 +22,22 @@ export default function SettingsPage() {
 
     return (
         <AppLayout>
-            <div className="space-y-6">
+            <div className="space-y-4 md:space-y-6">
                 {/* Header */}
                 <div>
                     <motion.h1
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="text-3xl font-display font-bold text-foreground flex items-center gap-2"
+                        className="text-2xl md:text-3xl font-display font-bold text-foreground flex items-center gap-2"
                     >
-                        <Settings className="w-8 h-8" />
+                        <Settings className="w-6 h-6 md:w-8 md:h-8" />
                         Settings
                     </motion.h1>
                     <motion.p
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.1 }}
-                        className="text-muted-foreground mt-1"
+                        className="text-sm md:text-base text-muted-foreground mt-1"
                     >
                         Manage your account and application preferences
                     </motion.p>
@@ -45,26 +45,31 @@ export default function SettingsPage() {
 
                 {/* Tabs */}
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-6 mb-4 h-auto">
-                        <TabsTrigger value="general" className="flex items-center gap-2 py-2">
-                            <User className="w-4 h-4" />
-                            General
+                    <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-5 mb-4 h-auto">
+                        <TabsTrigger value="general" className="flex items-center gap-1.5 md:gap-2 py-2 text-xs md:text-sm">
+                            <User className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                            <span className="hidden sm:inline">General</span>
+                            <span className="sm:hidden">Gen</span>
                         </TabsTrigger>
-                        <TabsTrigger value="preferences" className="flex items-center gap-2 py-2">
-                            <Settings className="w-4 h-4" />
-                            Preferences
+                        <TabsTrigger value="preferences" className="flex items-center gap-1.5 md:gap-2 py-2 text-xs md:text-sm">
+                            <Settings className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                            <span className="hidden sm:inline">Preferences</span>
+                            <span className="sm:hidden">Prefs</span>
                         </TabsTrigger>
-                        <TabsTrigger value="account" className="flex items-center gap-2 py-2">
-                            <Mail className="w-4 h-4" />
-                            Account
+                        <TabsTrigger value="account" className="flex items-center gap-1.5 md:gap-2 py-2 text-xs md:text-sm">
+                            <Mail className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                            <span className="hidden sm:inline">Account</span>
+                            <span className="sm:hidden">Acct</span>
                         </TabsTrigger>
-                        <TabsTrigger value="theme" className="flex items-center gap-2 py-2">
-                            <Palette className="w-4 h-4" />
-                            Theme
+                        <TabsTrigger value="theme" className="flex items-center gap-1.5 md:gap-2 py-2 text-xs md:text-sm">
+                            <Palette className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                            <span className="hidden sm:inline">Theme</span>
+                            <span className="sm:hidden">Theme</span>
                         </TabsTrigger>
-                        <TabsTrigger value="data" className="flex items-center gap-2 py-2">
-                            <Database className="w-4 h-4" />
-                            Data
+                        <TabsTrigger value="data" className="flex items-center gap-1.5 md:gap-2 py-2 text-xs md:text-sm">
+                            <Database className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                            <span className="hidden sm:inline">Data</span>
+                            <span className="sm:hidden">Data</span>
                         </TabsTrigger>
                     </TabsList>
 

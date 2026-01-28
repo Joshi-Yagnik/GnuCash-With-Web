@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sequence Diagram - Authentication &amp; Initialization - Finance Team:105</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 40px;
+            background: white;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            background: white;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .mermaid {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .instructions {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .back-button {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 500;
+            transition: background 0.3s ease;
+        }
+
+        .back-button:hover {
+            background: #5568d3;
+        }
+
+        .back-button::before {
+            content: '← ';
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="index.html" class="back-button">Back to All Diagrams</a>
+        <div class="instructions">
+            <strong>To save as image:</strong> Right-click on the diagram → Save image as → Choose location
+            <br>Or use browser screenshot tool: Press F12 → Ctrl+Shift+P → Type "screenshot" → "Capture full size
+            screenshot"
+        </div>
+        <h1>Sequence Diagram - Authentication &amp; Initialization</h1>
+        <div class="mermaid">
+            sequenceDiagram
+            actor User
+            participant AuthPage
+            participant Firebase Auth
+            participant App
+            participant Firestore
+            participant Dashboard
+
+            User->>AuthPage: Opens application
+            AuthPage->>Firebase Auth: Check authentication status
+
+            alt User is NOT authenticated
+            AuthPage->>User: Display login/signup options
+
+            alt Sign up with Email/Password
+            User->>AuthPage: Enter email & password
+            AuthPage->>Firebase Auth: createUserWithEmailAndPassword()
+            Firebase Auth->>Firebase Auth: Create user account
+            Firebase Auth->>AuthPage: Return user object
+            AuthPage->>Firebase Auth: sendEmailVerification()
+            Firebase Auth->>User: Send verification email
+            AuthPage->>User: Redirect to verification page
+            User->>User: Check email & click link
+            User->>AuthPage: Return to app
+            end
+
+            alt Sign in with Email/Password
+            User->>AuthPage: Enter credentials
+            AuthPage->>Firebase Auth: signInWithEmailAndPassword()
+            Firebase Auth->>AuthPage: Return user object
+            end
+
+            alt Sign in with Google
+            User->>AuthPage: Click Google sign-in
+            AuthPage->>Firebase Auth: signInWithPopup(GoogleProvider)
+            Firebase Auth->>User: Google OAuth consent
+            User->>Firebase Auth: Approve
+            Firebase Auth->>AuthPage: Return user object
+            end
+
+            AuthPage->>Firebase Auth: Check email verification
+
+            alt Email NOT verified
+            AuthPage->>User: Request email verification
+            User->>User: Verify email
+            end
+
+            alt Email verified
+            AuthPage->>Firestore: Check if user initialized
+            Firestore->>AuthPage: Return isInitialized flag
+
+            alt User NOT initialized (first login)
+            AuthPage->>Firestore: Create UserProfile document
+            Note over Firestore: userProfiles/{uid}
+            Firestore->>Firestore: Create default Book "Main"
+            Note over Firestore: books/{bookId}
+            Firestore->>Firestore: Create default accounts in Book
+            Note over Firestore: books/{bookId}/accounts
+            Firestore->>Firestore: Create default categories
+            Note over Firestore: books/{bookId}/categories
+            Firestore->>Firestore: Set isInitialized = true
+            Firestore->>AuthPage: Initialization complete
+            end
+
+            AuthPage->>App: User authenticated & initialized
+            App->>Firestore: Load user books
+            Firestore->>App: Return books list
+
+            alt User has multiple books
+            App->>User: Show book selector
+            User->>App: Select active book
+            end
+
+            App->>Firestore: Load book data (accounts, transactions)
+            Firestore->>App: Return book data
+            App->>Dashboard: Navigate to dashboard
+            Dashboard->>User: Display financial overview
+            end
+            end
+
+            alt User IS authenticated
+            App->>Firestore: Load user data
+            Firestore->>App: Return user data
+            App->>Dashboard: Navigate to dashboard
+            Dashboard->>User: Display dashboard
+            end
+        </div>
+    </div>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            sequence: {
+                useMaxWidth: true
+            }
+        });
+    </script>
+</body>
+
+</html>

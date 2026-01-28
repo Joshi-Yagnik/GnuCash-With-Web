@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Core Operations Workflow - Finance Team:105</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 40px;
+            background: white;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .mermaid {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .instructions {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .back-button {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 500;
+        }
+
+        .back-button::before {
+            content: '← ';
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="index.html" class="back-button">Back to All Diagrams</a>
+
+        <div class="instructions">
+            <strong>To save as image:</strong>
+            Right-click → Save image as <br>
+            Or: F12 → Ctrl+Shift+P → "Capture full size screenshot"
+        </div>
+
+        <h1>Main App Phase 1: Core Daily Operations</h1>
+
+        <div class="mermaid">
+            flowchart TB
+            Dashboard[Dashboard Page] --> UserAction{User Action?}
+
+            style Dashboard fill:#2196F3,stroke:#1565C0,color:#fff
+            style TransactionsPage fill:#FF9800,stroke:#E65100,color:#fff
+            style AccountsPage fill:#9C27B0,stroke:#6A1B9A,color:#fff
+            style SaveTrans fill:#00BCD4,stroke:#00838F,color:#fff
+
+            %% --- Transaction Management ---
+            UserAction -->|Manage Transactions| TransactionsPage[Transactions Page]
+            TransactionsPage --> TransAction{Transaction Action?}
+            TransAction -->|Add| AddTrans[Add Transaction Dialog]
+            TransAction -->|Edit| EditTrans[Edit Transaction]
+            TransAction -->|Delete| DeleteTrans[Delete Transaction]
+            TransAction -->|Filter| FilterTrans[Filter by Date/Account/Tag]
+
+            AddTrans --> EnterDetails[Enter Description, Date, Amount]
+            EnterDetails --> AddSplits[Add Splits for Accounts]
+            AddSplits --> SelectTags[Optionally Add Tags]
+            SelectTags --> SaveTrans[Save Transaction & Splits]
+            SaveTrans --> UpdateBalance[Update Account Balances]
+            UpdateBalance --> TransactionsPage
+
+            EditTrans --> EnterDetails
+            DeleteTrans --> ReverseBalance[Reverse Balance Changes]
+            ReverseBalance --> TransactionsPage
+            FilterTrans --> TransactionsPage
+
+            %% --- Account Management ---
+            UserAction -->|Manage Accounts| AccountsPage[Accounts Page]
+            AccountsPage --> AccAction{Account Action?}
+            AccAction -->|Create| CreateAccount[Add New Account]
+            AccAction -->|Edit| EditAccount[Edit Account Details]
+            AccAction -->|Delete| DeleteAccount[Delete Account]
+            AccAction -->|View| ViewAccount[View Account Details & History]
+            AccAction -->|Favorite| ToggleFavorite[Toggle Favorite Account]
+            AccAction -->|Hierarchy| SetParent[Set Parent Account]
+            CreateAccount --> UpdateFirestore[Update Firestore]
+            EditAccount --> UpdateFirestore
+            DeleteAccount --> UpdateFirestore
+            ToggleFavorite --> UpdateFirestore
+            SetParent --> UpdateFirestore
+            UpdateFirestore --> AccountsPage
+
+            ViewAccount --> AccDetailAction{Account Detail Action?}
+            AccDetailAction -->|Add Transaction| AddTransFromAcc[Add Transaction to Account]
+            AccDetailAction -->|View Activity| ViewActivity[View Account Activity Log]
+            AccDetailAction -->|Back| AccountsPage
+            AddTransFromAcc --> TransactionsPage
+            ViewActivity --> ViewAccount
+
+            %% --- Global Search ---
+            UserAction -->|Search| GlobalSearch[Global Search: Accounts/Transactions]
+            GlobalSearch --> SearchResults[Display Search Results]
+            SearchResults --> UserAction
+        </div>
+    </div>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            }
+        });
+    </script>
+</body>
+
+</html>

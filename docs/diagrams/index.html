@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Finance Joshi - All Diagrams</title>
+    <title>Finance Team:105 - All Diagrams</title>
     <style>
         * {
             margin: 0;
@@ -150,7 +150,7 @@
 <body>
     <div class="container">
         <header>
-            <h1>📊 Finance Joshi</h1>
+            <h1>📊 Finance Team:105</h1>
             <p class="subtitle">Project Diagrams & Documentation</p>
         </header>
 
@@ -169,15 +169,69 @@
             </div>
         </div>
 
+        <div class="info-section">
+            <h2>🏗️ Architecture Diagrams</h2>
+        </div>
+
         <div class="grid">
             <div class="card">
                 <div class="card-icon">🔄</div>
-                <div class="card-title">Workflow Chart</div>
+                <div class="card-title">Complete Workflow Chart</div>
                 <div class="card-description">
-                    Complete user journey from authentication through all features including accounts, transactions,
-                    reports, and profile management.
+                    The entire project workflow in one view. Covers everything from authentication to all feature sets.
+                    (Large Diagram)
                 </div>
                 <a href="workflow_chart.html" class="card-link">View Diagram →</a>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">🔐</div>
+                <div class="card-title">Auth & Init Workflow</div>
+                <div class="card-description">
+                    Focused view of the Authentication process, Sign Up/In flows, Email Verification, and User
+                    Initialization logic.
+                </div>
+                <a href="workflow_auth.html" class="card-link">View Diagram →</a>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">📱</div>
+                <div class="card-title">Main App: Core Ops</div>
+                <div class="card-description">
+                    Part 1 of Main App Workflow: Core daily operations via Dashboard, Transactions, Accounts, and Global
+                    Search.
+                </div>
+                <a href="workflow_core.html" class="card-link">View Diagram →</a>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">🧠</div>
+                <div class="card-title">Main App: Management</div>
+                <div class="card-description">
+                    Part 2 of Main App Workflow: Structural management of Books, Categories, Tags, Budgets, and
+                    Recurring Transactions.
+                </div>
+                <a href="workflow_management.html" class="card-link">View Diagram →</a>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">📊</div>
+                <div class="card-title">Main App: Analysis</div>
+                <div class="card-description">
+                    Part 3 of Main App Workflow: Analysis tools including Reports, Import/Export, Settings, and Help.
+                </div>
+                <a href="workflow_analysis.html" class="card-link">View Diagram →</a>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">🏗️</div>
+                <div class="card-title">Class Diagram</div>
+                <div class="card-description">
+                    Complete UML Class Diagram with multi-book architecture showing all entities (User, Book, Account,
+                    Transaction, Split, Category, Tag, Budget, RecurringTransaction) with attributes, methods, and
+                    relationships.
+                </div>
+                <a href="class_diagram.html" class="card-link">View Diagram →</a>
             </div>
 
             <div class="card">
@@ -209,15 +263,68 @@
                 </div>
                 <a href="dfd_level_2_transaction.html" class="card-link">View Diagram →</a>
             </div>
+        </div>
+
+        <div class="info-section">
+            <h2>🔀 Sequence Diagrams - User Flows</h2>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <div class="card-icon">🔐</div>
+                <div class="card-title">Authentication & Initialization</div>
+                <div class="card-description">
+                    Complete authentication flow including email/password signup, Google OAuth, email verification, and
+                    first-time user initialization with default book and accounts.
+                </div>
+                <a href="sequence_auth.html" class="card-link">View Diagram →</a>
+            </div>
 
             <div class="card">
-                <div class="card-icon">🏗️</div>
-                <div class="card-title">Class Diagram</div>
+                <div class="card-icon">💰</div>
+                <div class="card-title">Transaction Creation</div>
                 <div class="card-description">
-                    Complete UML Class Diagram showing all entities (User, Account, Transaction, Split, Category) with
-                    attributes, methods, and relationships.
+                    Detailed flow for creating transactions with double-entry splits, showing data entry, balance
+                    validation, Firestore operations, and account balance updates.
                 </div>
-                <a href="class_diagram.html" class="card-link">View Diagram →</a>
+                <a href="sequence_transaction.html" class="card-link">View Diagram →</a>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">📚</div>
+                <div class="card-title">Multi-Book Workflow</div>
+                <div class="card-description">
+                    Complete multi-book management including creating new books, switching between books with context
+                    loading, and sharing books with other users via invitations.
+                </div>
+                <a href="sequence_multibook.html" class="card-link">View Diagram →</a>
+            </div>
+
+            <div class="card">
+                <div class="card-icon">📊</div>
+                <div class="card-title">Budget Management</div>
+                <div class="card-description">
+                    Budget lifecycle including creation, progress tracking with analytics, real-time updates when
+                    expenses are added, and editing/deletion operations.
+                </div>
+                <a href="sequence_budget.html" class="card-link">View Diagram →</a>
+            </div>
+        </div>
+
+        <div class="info-section">
+            <h2>🗄️ Database Diagram</h2>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <div class="card-icon">🗺️</div>
+                <div class="card-title">Entity-Relationship Diagram</div>
+                <div class="card-description">
+                    Comprehensive E-R diagram showing all database entities (User, Book, Account, Transaction, Split,
+                    Category, Tag, Budget, RecurringTransaction) with complete attributes, data types, and cardinality
+                    relationships.
+                </div>
+                <a href="er_diagram.html" class="card-link">View Diagram →</a>
             </div>
 
             <div class="card">
@@ -236,11 +343,31 @@
 
             <h3 style="color: #764ba2; margin-top: 20px;">What's Included</h3>
             <ul>
-                <li><strong>Workflow Chart:</strong> Complete application flow and user journey</li>
+                <li><strong>Workflow Chart:</strong> Complete application flow with all current features (Books, Tags,
+                    Budgets, Recurring)</li>
+                <li><strong>Class Diagram:</strong> UML design with multi-book architecture and all entities</li>
                 <li><strong>DFD Level 0:</strong> High-level system context</li>
                 <li><strong>DFD Level 1:</strong> Internal processes and data flow</li>
                 <li><strong>DFD Level 2:</strong> Detailed transaction processing</li>
-                <li><strong>Class Diagram:</strong> Object-oriented design and relationships</li>
+                <li><strong>Sequence - Authentication:</strong> User signup, login, and initialization flow</li>
+                <li><strong>Sequence - Transaction:</strong> Double-entry transaction creation with splits</li>
+                <li><strong>Sequence - Multi-Book:</strong> Book management and sharing workflow</li>
+                <li><strong>Sequence - Budget:</strong> Budget creation and real-time tracking</li>
+                <li><strong>E-R Diagram:</strong> Complete database schema with all entities and relationships</li>
+            </ul>
+
+            <h3 style="color: #764ba2; margin-top: 20px;">Key Features Documented</h3>
+            <ul>
+                <li>Multi-book architecture with book switching and sharing</li>
+                <li>Double-entry accounting with splits</li>
+                <li>Account hierarchy (parent-child relationships)</li>
+                <li>Transaction tagging system</li>
+                <li>Monthly budget tracking per category</li>
+                <li>Recurring transactions with scheduling</li>
+                <li>Account favorites and activity logging</li>
+                <li>Global search functionality</li>
+                <li>Import/Export (CSV, GnuCash XML)</li>
+                <li>Multi-currency support with exchange rates</li>
             </ul>
 
             <h3 style="color: #764ba2; margin-top: 20px;">Perfect For</h3>
@@ -251,12 +378,13 @@
                 <li>Academic submissions</li>
                 <li>Client presentations</li>
                 <li>Team onboarding</li>
+                <li>System architecture reviews</li>
             </ul>
         </div>
 
         <footer>
-            <p><strong>Finance Joshi</strong> - Personal Finance Management System</p>
-            <p>Created: January 19, 2026 | Version 1.0</p>
+            <p><strong>Finance Team:105</strong> - Personal Finance Management System</p>
+            <p>Updated: January 28, 2026 | Version 2.0</p>
         </footer>
     </div>
 </body>

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Workflow Chart - Finance Team:105</title>
+    <title>Main Application Workflow - Finance Team:105</title>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <style>
         body {
@@ -17,7 +17,6 @@
         .container {
             max-width: 100%;
             margin: 0 auto;
-            background: white;
         }
 
         h1 {
@@ -48,11 +47,6 @@
             text-decoration: none;
             border-radius: 5px;
             font-weight: 500;
-            transition: background 0.3s ease;
-        }
-
-        .back-button:hover {
-            background: #5568d3;
         }
 
         .back-button::before {
@@ -64,53 +58,18 @@
 <body>
     <div class="container">
         <a href="index.html" class="back-button">Back to All Diagrams</a>
+
         <div class="instructions">
-            <strong>To save as image:</strong> Right-click on the diagram → Save image as → Choose location
-            <br>Or use browser screenshot tool: Press F12 → Ctrl+Shift+P → Type "screenshot" → "Capture full size
-            screenshot"
+            <strong>To save as image:</strong>
+            Right-click → Save image as <br>
+            Or: F12 → Ctrl+Shift+P → "Capture full size screenshot"
         </div>
-        <h1>Finance Team:105 - Project Workflow Chart</h1>
+
+        <h1>Part 2: Main Application Workflow</h1>
+
         <div class="mermaid">
             flowchart TB
-            Start([User Opens App]) --> CheckAuth{User Authenticated?}
-
-            CheckAuth -->|No| AuthPage[Auth Page]
-            AuthPage --> SignUpOrIn{Sign Up or Sign In?}
-
-            SignUpOrIn -->|Sign Up| EmailSignUp[Email/Password Signup]
-            SignUpOrIn -->|Sign In| EmailSignIn[Email/Password Login]
-            SignUpOrIn -->|Google| GoogleAuth[Google OAuth]
-
-            EmailSignUp --> SendVerification[Send Email Verification]
-            SendVerification --> VerifyEmail[Verify Email Page]
-
-            EmailSignIn --> CheckVerified{Email Verified?}
-            GoogleAuth --> CheckVerified
-
-            CheckVerified -->|No| VerifyEmail
-            CheckVerified -->|Yes| CheckInit{User Initialized?}
-
-            VerifyEmail --> UserVerifies[User Verifies Email]
-            UserVerifies --> CheckInit
-
-            CheckInit -->|No| InitUser[Initialize User Data]
-            InitUser --> CreateProfile[Create User Profile]
-            CreateProfile --> CreateDefaultBook[Create Default Book Main]
-            CreateDefaultBook --> CreateDefaultAccounts[Create Default Accounts in Book]
-            CreateDefaultAccounts --> CreateDefaultCategories[Create Default Categories]
-            CreateDefaultCategories --> SetInitFlag[Set isInitialized Flag]
-
-            CheckInit -->|Yes| CheckAuth
-            CheckAuth -->|Yes & Verified| SelectBook{Has Multiple Books?}
-
-            SelectBook -->|No| LoadDefaultBook[Load Default Book]
-            SelectBook -->|Yes| BookSelector[Select Active Book]
-            BookSelector --> LoadBookData[Load Book Data]
-            LoadDefaultBook --> Dashboard
-            LoadBookData --> Dashboard
-
-            SetInitFlag --> Dashboard[Dashboard Page]
-
+            StartFromAuth[[From Auth Workflow]] --> Dashboard[Dashboard Page]
             Dashboard --> UserAction{User Action?}
 
             UserAction -->|View Dashboard| ViewStats[View Financial Stats & Charts]
@@ -128,7 +87,7 @@
             BookAction -->|Delete| DeleteBook[Delete Book]
             BookAction -->|Share| ShareBook[Share Book with User]
             CreateBook --> BooksPage
-            SwitchBook --> LoadBookData
+            SwitchBook --> Dashboard
             EditBook --> BooksPage
             DeleteBook --> BooksPage
             ShareBook --> SendInvite[Send Book Invitation]
@@ -255,7 +214,7 @@
             HelpPage --> UserAction
 
             UserAction -->|Logout| LogoutUser[Sign Out]
-            LogoutUser --> Start
+            LogoutUser --> StartLink[[Return to Login Screen]]
 
             SettingsPage --> UserAction
             ImportExportPage --> UserAction
@@ -270,17 +229,15 @@
             AccountsPage --> UserAction
             ViewStats --> UserAction
 
-            style Start fill:#4CAF50,stroke:#2E7D32,color:#fff
+            style StartFromAuth fill:#4CAF50,stroke:#2E7D32,color:#fff
             style Dashboard fill:#2196F3,stroke:#1565C0,color:#fff
-            style AuthPage fill:#FF9800,stroke:#E65100,color:#fff
-            style InitUser fill:#9C27B0,stroke:#6A1B9A,color:#fff
-            style CreateDefaultBook fill:#9C27B0,stroke:#6A1B9A,color:#fff
             style BooksPage fill:#673AB7,stroke:#4527A0,color:#fff
             style SaveTrans fill:#00BCD4,stroke:#00838F,color:#fff
             style BudgetsPage fill:#FF5722,stroke:#D84315,color:#fff
             style RecurringPage fill:#795548,stroke:#5D4037,color:#fff
             style TagsPage fill:#E91E63,stroke:#C2185B,color:#fff
             style LogoutUser fill:#F44336,stroke:#C62828,color:#fff
+            style StartLink fill:#FF9800,stroke:#E65100,color:#fff
         </div>
     </div>
     <script>

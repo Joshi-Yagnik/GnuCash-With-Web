@@ -26,13 +26,13 @@ export default function Reports() {
 
   return (
     <AppLayout>
-      <div className="space-y-6">
+      <div className="space-y-4 md:space-y-6">
         {/* Page Header */}
         <div>
           <motion.h1
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-3xl font-display font-bold text-foreground"
+            className="text-2xl md:text-3xl font-display font-bold text-foreground"
           >
             Reports
           </motion.h1>
@@ -40,23 +40,23 @@ export default function Reports() {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-muted-foreground mt-1"
+            className="text-sm md:text-base text-muted-foreground mt-1"
           >
             Analyze your financial data with detailed reports.
           </motion.p>
         </div>
 
         {/* Key Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
             <Card className="shadow-soft border-income/20">
-              <CardContent className="pt-6">
-                <p className="text-sm text-muted-foreground">Total Income</p>
-                <p className="text-3xl font-display font-bold text-income mt-1">
+              <CardContent className="pt-5 md:pt-6">
+                <p className="text-xs md:text-sm text-muted-foreground">Total Income</p>
+                <p className="text-2xl md:text-3xl font-display font-bold text-income mt-1">
                   ${totalIncome.toLocaleString()}
                 </p>
               </CardContent>
@@ -68,9 +68,9 @@ export default function Reports() {
             transition={{ delay: 0.3 }}
           >
             <Card className="shadow-soft border-expense/20">
-              <CardContent className="pt-6">
-                <p className="text-sm text-muted-foreground">Total Expenses</p>
-                <p className="text-3xl font-display font-bold text-expense mt-1">
+              <CardContent className="pt-5 md:pt-6">
+                <p className="text-xs md:text-sm text-muted-foreground">Total Expenses</p>
+                <p className="text-2xl md:text-3xl font-display font-bold text-expense mt-1">
                   ${totalExpenses.toLocaleString()}
                 </p>
               </CardContent>
@@ -82,9 +82,9 @@ export default function Reports() {
             transition={{ delay: 0.4 }}
           >
             <Card className="shadow-soft border-accent/20">
-              <CardContent className="pt-6">
-                <p className="text-sm text-muted-foreground">Savings Rate</p>
-                <p className="text-3xl font-display font-bold text-accent mt-1">
+              <CardContent className="pt-5 md:pt-6">
+                <p className="text-xs md:text-sm text-muted-foreground">Savings Rate</p>
+                <p className="text-2xl md:text-3xl font-display font-bold text-accent mt-1">
                   {savingsRate}%
                 </p>
               </CardContent>
@@ -94,17 +94,17 @@ export default function Reports() {
 
         {/* Charts Tabs */}
         <Tabs defaultValue="overview" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="income">Income</TabsTrigger>
-            <TabsTrigger value="expenses">Expenses</TabsTrigger>
+          <TabsList className="w-full grid grid-cols-3">
+            <TabsTrigger value="overview" className="text-xs md:text-sm">Overview</TabsTrigger>
+            <TabsTrigger value="income" className="text-xs md:text-sm">Income</TabsTrigger>
+            <TabsTrigger value="expenses" className="text-xs md:text-sm">Expenses</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <TabsContent value="overview" className="space-y-4 md:space-y-6">
+            <div className="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-6">
               <Card className="shadow-soft">
                 <CardHeader>
-                  <CardTitle className="font-display">Income vs Expenses Trend</CardTitle>
+                  <CardTitle className="text-base md:text-lg font-display">Income vs Expenses Trend</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <SpendingChart />
@@ -112,7 +112,7 @@ export default function Reports() {
               </Card>
               <Card className="shadow-soft">
                 <CardHeader>
-                  <CardTitle className="font-display">Spending by Category</CardTitle>
+                  <CardTitle className="text-base md:text-lg font-display">Spending by Category</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <CategoryChart />
@@ -124,15 +124,15 @@ export default function Reports() {
           <TabsContent value="income">
             <Card className="shadow-soft">
               <CardHeader>
-                <CardTitle className="font-display">Monthly Income</CardTitle>
+                <CardTitle className="text-base md:text-lg font-display">Monthly Income</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-[350px]">
+                <div className="h-[300px] md:h-[350px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={monthlySpendingData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" />
-                      <YAxis stroke="hsl(var(--muted-foreground))" />
+                      <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                      <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
                       <Tooltip
                         contentStyle={{
                           backgroundColor: "hsl(var(--card))",
@@ -152,15 +152,15 @@ export default function Reports() {
           <TabsContent value="expenses">
             <Card className="shadow-soft">
               <CardHeader>
-                <CardTitle className="font-display">Monthly Expenses</CardTitle>
+                <CardTitle className="text-base md:text-lg font-display">Monthly Expenses</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-[350px]">
+                <div className="h-[300px] md:h-[350px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={monthlySpendingData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" />
-                      <YAxis stroke="hsl(var(--muted-foreground))" />
+                      <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                      <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
                       <Tooltip
                         contentStyle={{
                           backgroundColor: "hsl(var(--card))",
@@ -169,10 +169,10 @@ export default function Reports() {
                         }}
                         formatter={(value: number) => [`$${value.toLocaleString()}`, "Expenses"]}
                       />
-                      <Line 
-                        type="monotone" 
-                        dataKey="expenses" 
-                        stroke="hsl(0, 65%, 50%)" 
+                      <Line
+                        type="monotone"
+                        dataKey="expenses"
+                        stroke="hsl(0, 65%, 50%)"
                         strokeWidth={3}
                         dot={{ fill: "hsl(0, 65%, 50%)", strokeWidth: 2 }}
                       />

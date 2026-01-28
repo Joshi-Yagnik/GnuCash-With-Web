@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sequence Diagram - Transaction Creation - Finance Team:105</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 40px;
+            background: white;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            background: white;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .mermaid {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .instructions {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .back-button {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 500;
+            transition: background 0.3s ease;
+        }
+
+        .back-button:hover {
+            background: #5568d3;
+        }
+
+        .back-button::before {
+            content: '← ';
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="index.html" class="back-button">Back to All Diagrams</a>
+        <div class="instructions">
+            <strong>To save as image:</strong> Right-click on the diagram → Save image as → Choose location
+            <br>Or use browser screenshot tool: Press F12 → Ctrl+Shift+P → Type "screenshot" → "Capture full size
+            screenshot"
+        </div>
+        <h1>Sequence Diagram - Transaction Creation with Splits</h1>
+        <div class="mermaid">
+            sequenceDiagram
+            actor User
+            participant TransactionUI
+            participant App
+            participant Firestore
+            participant AccountService
+
+            User->>TransactionUI: Click "Add Transaction"
+            TransactionUI->>User: Display transaction form
+
+            User->>TransactionUI: Enter description, date, amount
+            Note over User,TransactionUI: e.g., "Grocery Shopping"<br />Date: 2026-01-28<br />Amount: 5000
+
+            User->>TransactionUI: Add splits
+            loop For each split
+            User->>TransactionUI: Select account
+            Note over User,TransactionUI: e.g., Cash Account (-5000)<br />Groceries Expense (+5000)
+            User->>TransactionUI: Enter amount & memo
+            TransactionUI->>TransactionUI: Validate split balance
+            end
+
+            TransactionUI->>TransactionUI: Verify splits balance to zero
+            Note over TransactionUI: Sum of all splits must = 0<br />Expense: +5000<br />Cash: -5000<br />Total: 0 ✓
+
+            User->>TransactionUI: (Optional) Add tags
+            User->>TransactionUI: Click Save
+
+            TransactionUI->>App: Submit transaction data
+
+            App->>Firestore: Create transaction document
+            Note over Firestore: books/{bookId}/transactions/{txId}
+            Firestore->>App: Transaction created (txId)
+
+            loop For each split
+            App->>Firestore: Create split document
+            Note over Firestore: books/{bookId}/splits/{splitId}<br />References: txId, accountId
+            Firestore->>App: Split created
+
+            App->>AccountService: Update account balance
+            AccountService->>Firestore: Get current account balance
+            Firestore->>AccountService: Return balance
+            AccountService->>AccountService: Calculate new balance
+            Note over AccountService: newBalance = oldBalance + splitValue
+            AccountService->>Firestore: Update account balance
+            Firestore->>AccountService: Balance updated
+
+            App->>Firestore: Create account activity log
+            Note over Firestore: accountActivity/{activityId}
+            Firestore->>App: Activity logged
+            end
+
+            alt Tags were added
+            loop For each tag
+            App->>Firestore: Link tag to transaction
+            Firestore->>App: Tag linked
+            end
+            end
+
+            App->>App: Update local state
+            App->>TransactionUI: Transaction saved successfully
+            TransactionUI->>User: Show success message
+            TransactionUI->>User: Refresh transaction list
+
+            alt Error occurs
+            App->>App: Rollback changes
+            App->>TransactionUI: Return error
+            TransactionUI->>User: Display error message
+            end
+        </div>
+    </div>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            sequence: {
+                useMaxWidth: true
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -69,7 +69,7 @@ export default function Dashboard() {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard title="Total Balance" value={totalBalance} type="balance" index={0} />
+          <StatCard title="Total Assets" value={totalBalance} type="balance" index={0} />
           <StatCard title="Total Income" value={totalIncome} type="income" index={1} />
           <StatCard title="Total Expenses" value={totalExpenses} type="expense" index={2} />
           <StatCard title="Net Savings" value={savings} type="savings" index={3} />

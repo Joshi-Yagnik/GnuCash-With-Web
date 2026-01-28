@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis & System Workflow - Finance Team:105</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 40px;
+            background: white;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .mermaid {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .instructions {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .back-button {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 500;
+        }
+
+        .back-button::before {
+            content: '← ';
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="index.html" class="back-button">Back to All Diagrams</a>
+
+        <div class="instructions">
+            <strong>To save as image:</strong>
+            Right-click → Save image as <br>
+            Or: F12 → Ctrl+Shift+P → "Capture full size screenshot"
+        </div>
+
+        <h1>Main App Phase 3: Analysis & System</h1>
+
+        <div class="mermaid">
+            flowchart TB
+            Dashboard[Dashboard Page] --> UserAction{User Action?}
+
+            style Dashboard fill:#2196F3,stroke:#1565C0,color:#fff
+            style LogoutUser fill:#F44336,stroke:#C62828,color:#fff
+            style StartLink fill:#FF9800,stroke:#E65100,color:#fff
+
+            %% --- Dashboard ---
+            UserAction -->|View Dashboard| ViewStats[View Financial Stats & Charts]
+            ViewStats --> UserAction
+
+            %% --- Reports & Analytics ---
+            UserAction -->|View Reports| ReportsPage[Reports & Analytics Page]
+            ReportsPage --> RepAction{Report Action?}
+            RepAction -->|Income vs Expense| ShowIncomeExpense[Income vs Expense Chart]
+            RepAction -->|Category Chart| ShowCategoryChart[Category Distribution]
+            RepAction -->|Spending Trends| ShowSpendingChart[Spending Over Time]
+            RepAction -->|Budget Report| ShowBudgetReport[Budget Performance]
+            RepAction -->|Export| ExportReport[Export to PDF/CSV]
+            RepAction -->|Filter| FilterReports[Filter by Date Range/Category]
+            ShowIncomeExpense --> ReportsPage
+            ShowCategoryChart --> ReportsPage
+            ShowSpendingChart --> ReportsPage
+            ShowBudgetReport --> ReportsPage
+            ExportReport --> ReportsPage
+            FilterReports --> ReportsPage
+
+            %% --- Import / Export ---
+            UserAction -->|Import/Export| ImportExportPage[Import/Export Page]
+            ImportExportPage --> IEAction{Import/Export Action?}
+            IEAction -->|Import CSV| ImportCSV[Import Transactions from CSV]
+            IEAction -->|Export CSV| ExportCSV[Export to CSV]
+            IEAction -->|Export XML| ExportXML[Export GnuCash XML]
+            ImportCSV --> ImportExportPage
+            ExportCSV --> ImportExportPage
+            ExportXML --> ImportExportPage
+
+            %% --- Settings ---
+            UserAction -->|Settings| SettingsPage[Settings Page]
+            SettingsPage --> SettAction{Settings Action?}
+            SettAction -->|Theme| ChangeTheme[Change Theme Light/Dark]
+            SettAction -->|Currency| SetCurrency[Set Default Currency]
+            SettAction -->|Profile| UpdateProfile[Update Profile Info]
+            SettAction -->|Password| ChangePassword[Change Password]
+            ChangeTheme --> SettingsPage
+            SetCurrency --> SettingsPage
+            UpdateProfile --> SettingsPage
+            ChangePassword --> SettingsPage
+
+            %% --- Help ---
+            UserAction -->|Help| HelpPage[Help & Documentation Page]
+            HelpPage --> UserAction
+
+            %% --- Logout ---
+            UserAction -->|Logout| LogoutUser[Sign Out]
+            LogoutUser --> StartLink[[Return to Login Screen]]
+        </div>
+    </div>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            }
+        });
+    </script>
+</body>
+
+</html>
