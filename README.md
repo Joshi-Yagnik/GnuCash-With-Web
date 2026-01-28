@@ -60,7 +60,7 @@ We maintain detailed architectural documentation to help developers understand t
 
 ## 📂 Repository
 
-**GitHub:** [https://github.com/GnuCash-With-Web](https://github.com/GnuCash-With-Web)
+**GitHub:** [https://github.com/Joshi-Yagnik/GnuCash-With-Web](https://github.com/Joshi-Yagnik/GnuCash-With-Web)
 
 ---
 
